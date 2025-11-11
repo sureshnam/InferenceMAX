@@ -68,17 +68,17 @@ docker run --rm --network=host --name=$client_name \
   $IMAGE \
   -lc "pip install -q datasets pandas && \
        python3 bench_serving/benchmark_serving.py \
-       --model=\$MODEL \
+       --model=$MODEL \
        --backend=vllm \
        --base-url=http://localhost:$PORT \
        --dataset-name=random \
-       --random-input-len=\$ISL --random-output-len=\$OSL \
-       --random-range-ratio=\$RANDOM_RANGE_RATIO \
-       --num-prompts=$NUM_PROMPTS --max-concurrency=\$CONC \
+       --random-input-len=$ISL --random-output-len=$OSL \
+       --random-range-ratio=$RANDOM_RANGE_RATIO \
+       --num-prompts=$NUM_PROMPTS --max-concurrency=$CONC \
        --request-rate=inf --ignore-eos \
        --save-result --percentile-metrics='ttft,tpot,itl,e2el' \
        --result-dir=/workspace/ \
-       --result-filename=\$RESULT_FILENAME.json"
+       --result-filename=$RESULT_FILENAME.json"
 
 docker stop $server_name
 
