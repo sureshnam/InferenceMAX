@@ -11,10 +11,10 @@ on:
       model:
         required: true
         type: string
-      framework:
+      precision:
         required: true
         type: string
-      precision:
+      framework:
         required: true
         type: string
       exp-name:
@@ -26,18 +26,25 @@ on:
       osl:
         required: true
         type: string
+      tp:
+        required: true
+        type: string
+      ep:
+        required: true
+        type: string
+      dp-attn:
+        required: true
+        type: boolean
       max-model-len:
         required: true
         type: string
+      conc:
+        required: true
+        type: string
       random-range-ratio:
-        required: true
+        required: false
         type: string
-      tp-list:
-        required: true
-        type: string
-      conc-list:
-        type: string
-        default: '[4, 8, 16, 32, 64]'
+        default: '0.8'
 
 env:
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -51,23 +58,19 @@ env:
   IMAGE: ${{ inputs.image }}
   FRAMEWORK: ${{ inputs.framework }}
   PRECISION: ${{ inputs.precision }}
+  TP: ${{ inputs.tp }}
+  EP_SIZE: ${{ inputs.ep }}
+  DP_ATTENTION: ${{ inputs.dp-attn }}
+  CONC: ${{ inputs.conc }}
+
+permissions:
+  contents: read
 
 jobs:
   benchmark:
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 180
-
-    strategy:
-      fail-fast: false
-      matrix:
-        tp: ${{ fromJson(inputs.tp-list) }}
-        conc: ${{ fromJson(inputs.conc-list) }}
-    name: '${{ inputs.exp-name }} ${{ inputs.runner }} ${{ inputs.precision }} tp${{ matrix.tp }} conc${{ matrix.conc }}'
-
-    env:
-      TP: ${{ matrix.tp }}
-      CONC: ${{ matrix.conc }}
-
+    name: '${{ inputs.exp-name }} ${{ inputs.runner }} ${{ inputs.precision }} tp=${{ inputs.tp }} ep=${{ inputs.ep }} dpa=${{ inputs.dp-attn }} conc=${{ inputs.conc }}'
     steps:
       - name: Resource cleanup
         run: |
@@ -119,7 +122,7 @@ jobs:
             done
           fi
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -127,7 +130,7 @@ jobs:
       - name: Launch job script
         env:
           RUNNER_NAME: ${{ runner.name }}
-          RESULT_FILENAME: ${{ env.EXP_NAME }}_${{ env.PRECISION }}_${{ env.FRAMEWORK }}_tp${{ env.TP }}_conc${{ env.CONC }}_${{ runner.name }}
+          RESULT_FILENAME: ${{ env.EXP_NAME }}_${{ env.PRECISION }}_${{ env.FRAMEWORK }}_tp${{ env.TP }}_ep${{ env.EP_SIZE }}_dpa_${{ env.DP_ATTENTION }}_conc${{ env.CONC }}_${{ runner.name }}
         run: |
           bash ./runners/launch_${RUNNER_NAME%%_*}.sh
           if [ -f "$RESULT_FILENAME.json" ]; then
@@ -138,11 +141,12 @@ jobs:
           fi
 
       - name: Process result
+        env:
+          RUNNER_TYPE: ${{ inputs.runner }}
         run: |
-          python3 utils/process_result.py ${{ inputs.runner }} $TP $RESULT_FILENAME $FRAMEWORK $PRECISION
-
+          python3 utils/process_result.py
       - name: Upload result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ env.RESULT_FILENAME }}
           path: agg_${{ env.RESULT_FILENAME }}.json

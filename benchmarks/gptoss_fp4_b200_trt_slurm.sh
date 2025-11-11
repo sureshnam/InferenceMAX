@@ -13,51 +13,28 @@
 # CONC
 # RESULT_FILENAME
 # PORT_OFFSET
+# DP_ATTENTION
+# EP_SIZE
 
 # GPTOSS TRTLLM Deployment Guide:
 # https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/deployment-guide/quick-start-recipe-for-gpt-oss-on-trtllm.md
 
 echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
 
-echo "TP: $TP, CONC: $CONC, ISL: $ISL, OSL: $OSL"
+echo "TP: $TP, CONC: $CONC, ISL: $ISL, OSL: $OSL, EP_SIZE: $EP_SIZE, DP_ATTENTION: $DP_ATTENTION"
 
 hf download $MODEL
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
 PORT=$(( 8888 + $PORT_OFFSET ))
 
 # ========= Determine DP_ATTENTION, EP_SIZE and MOE_BACKEND based on ISL, OSL, CONC =========
-EP_SIZE="1"
 MOE_BACKEND="TRTLLM"
-DP_ATTENTION=false
 
-# Lower concurrencies: Concurrency < 256
-# MoE backend=TRTLLM
-# Use TP Attention; Switch to MoE Expert parallel for conurrency >=16 (1k1k and 1k8k)
-TEP_REQUIRED=false
-if [[ "$TP" == "4" || "$TP" == "8" ]]; then 
-    if [[ "$ISL" == "1024" && "$OSL" == "1024" ]]; then
-        TEP_REQUIRED=true
-    elif [[ "$ISL" == "1024" && "$OSL" == "8192" ]]; then
-        TEP_REQUIRED=true
-    fi
-fi
-if [[ "$TEP_REQUIRED" == "true" && $CONC -ge 16 ]]; then
-    EP_SIZE="$TP"
-fi
-
-# Higher concurrencies: Concurrency >= 256
-#   MoE Backend = CUTLASS
-#   Use DP attention with expert parallel MoE
-if [[ $CONC -ge 256 ]]; then
-    EP_SIZE="$TP"
-    DP_ATTENTION=true
-    MOE_BACKEND="CUTLASS"
-fi
-
-echo "Final configuration: EP_SIZE='$EP_SIZE', MOE_BACKEND='$MOE_BACKEND', DP_ATTENTION='$DP_ATTENTION'"
+echo "MOE_BACKEND set to '$MOE_BACKEND'"
 
 EXTRA_CONFIG_FILE="gptoss-fp4.yml"
 export TRTLLM_ENABLE_PDL=1
+export NCCL_GRAPH_REGISTER=0
 
 cat > $EXTRA_CONFIG_FILE << EOF
 cuda_graph_config:
@@ -65,7 +42,7 @@ cuda_graph_config:
     max_batch_size: $CONC
 enable_attention_dp: $DP_ATTENTION
 kv_cache_config:
-    dtype: auto
+    dtype: fp8
     enable_block_reuse: false
     free_gpu_memory_fraction: 0.85
 print_iter_log: true
@@ -105,12 +82,6 @@ mpirun -n 1 --oversubscribe --allow-run-as-root \
 set +x
 while IFS= read -r line; do
     printf '%s\n' "$line"
-    if [[ "$line" =~ [Ee][Rr][Rr][Oo][Rr] ]]; then
-        sleep 5
-        tail -n100 $SERVER_LOG
-        echo "JOB $SLURM_JOB_ID ran on NODE $SLURMD_NODENAME"
-        exit 1
-    fi
     if [[ "$line" == *"Application startup complete"* ]]; then
         break
     fi
