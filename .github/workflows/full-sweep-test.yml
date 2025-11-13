@@ -46,7 +46,7 @@ jobs:
             gptoss-8k1k: ${{ steps.generate-configs.outputs.gptoss-8k1k }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              uses: actions/checkout@v4
 
               # This looks complicated, but it is just calling generate_sweep_configs.py conditioned on 
               # discrete inputs (i.e., run_1k1k, run_h100, etc.) to split the test sweep into discrete jobs 
@@ -422,7 +422,7 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         steps:
-            - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+            - uses: actions/checkout@v4
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
                   fetch-depth: 0
@@ -439,7 +439,7 @@ jobs:
             - name: Calculate success rate
               run: python3 utils/calc_success_rate.py $STATS_FILENAME
 
-            - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+            - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
               with:
                   name: "run-stats"
                   path: ${{ env.STATS_FILENAME }}.json
