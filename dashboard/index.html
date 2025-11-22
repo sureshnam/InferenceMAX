@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InferenceMAX Dashboard</title>
-    <meta http-equiv="Cache-Control" content="no-store" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -231,20 +228,10 @@
         loadData();
 
         async function loadData() {
-            const datasetSelect = document.getElementById('datasetSelect');
-            if (!datasetSelect.value) {
-                datasetSelect.value = Object.keys(datasetSources)[0];
-            }
-
-            const datasetId = datasetSelect.value;
+            const datasetId = document.getElementById('datasetSelect').value;
             const dataset = datasetSources[datasetId];
-            if (!dataset) {
-                showSelectionMessage('Dataset not found.');
-                return;
-            }
-
             try {
-                const resp = await fetch(`${dataset.src}?v=${Date.now()}`);
+                const resp = await fetch(dataset.src);
                 const payload = await resp.json();
                 const { entries, meta } = unpackPayload(payload, dataset);
                 currentMeta = meta;
@@ -298,9 +285,6 @@
             select.innerHTML = Object.entries(datasetSources)
                 .map(([id, d]) => `<option value="${id}">${d.label}</option>`)
                 .join('');
-            if (!select.value && select.options.length) {
-                select.value = select.options[0].value;
-            }
         }
 
         function populateFilterOptions(rows) {
