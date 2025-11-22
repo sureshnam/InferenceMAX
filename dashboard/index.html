@@ -3,101 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InferenceMAX Dashboard - H100 nvupstream</title>
+    <title>InferenceMAX Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg: #0f172a;
-            --panel: rgba(255, 255, 255, 0.06);
-            --panel-strong: rgba(255, 255, 255, 0.12);
-            --text: #e2e8f0;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --border: #dfe3ec;
+            --text: #0f172a;
+            --muted: #6b7280;
+            --accent: #2563eb;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: radial-gradient(circle at 10% 20%, rgba(59,130,246,0.25), transparent 20%),
-                        radial-gradient(circle at 80% 0%, rgba(248,113,113,0.18), transparent 25%),
-                        radial-gradient(circle at 50% 60%, rgba(16,185,129,0.18), transparent 35%),
-                        var(--bg);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
             padding: 32px;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .page { max-width: 1400px; margin: 0 auto; }
 
         header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 32px;
-            letter-spacing: -0.02em;
-        }
+        .title h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
+        .subtitle { margin-top: 6px; color: var(--muted); }
 
-        .subtitle {
-            color: var(--muted);
-            margin-top: 4px;
-            font-size: 15px;
-        }
-
-        .chip-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .chip {
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: var(--panel);
-            color: var(--text);
-            border: 1px solid var(--panel-strong);
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-
-        label {
+        .dataset-picker {
             display: flex;
             flex-direction: column;
-            font-size: 12px;
-            color: var(--muted);
             gap: 6px;
+            font-size: 13px;
+            color: var(--muted);
         }
 
         select {
             background: var(--panel);
-            color: var(--text);
-            border: 1px solid var(--panel-strong);
+            border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 10px 14px;
+            padding: 10px 12px;
             min-width: 200px;
             font-size: 14px;
+            color: var(--text);
         }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .filter-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .meta-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
 
         .grid {
             display: grid;
@@ -108,105 +87,67 @@
 
         .panel {
             background: var(--panel);
-            border: 1px solid var(--panel-strong);
+            border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 25px 80px rgba(15, 23, 42, 0.35);
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(15,23,42,0.08);
         }
 
-        .panel h2 {
-            margin: 0 0 12px 0;
-            font-size: 18px;
-            letter-spacing: -0.01em;
-        }
+        .panel h2 { margin: 0 0 12px 0; font-size: 18px; }
 
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 8px;
-        }
-
+        .stat { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .stat .label { color: var(--muted); font-size: 13px; }
-        .stat .value { font-size: 20px; font-weight: 700; }
+        .stat .value { font-weight: 700; font-size: 18px; }
 
-        .chart-wrapper {
-            background: rgba(255,255,255,0.02);
-            border-radius: 14px;
-            border: 1px solid var(--panel-strong);
-            padding: 12px;
-        }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 16px; }
 
-        .chart-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
-            gap: 16px;
-        }
+        .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; }
+        .chart-wrapper h3 { margin: 0 0 6px 0; font-size: 15px; color: var(--muted); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            color: var(--text);
-            font-size: 14px;
-        }
-
-        th, td {
-            text-align: left;
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--panel-strong);
-        }
-
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
         th { color: var(--muted); font-weight: 600; }
-        tbody tr:hover { background: rgba(255,255,255,0.03); }
+        tbody tr:hover { background: #f4f6fb; }
 
-        .footer {
-            margin-top: 18px;
-            color: var(--muted);
-            font-size: 12px;
-            text-align: right;
-        }
+        .legend { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); background: #f8fafc; font-weight: 600; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="page">
         <header>
-            <div>
-                <h1>InferenceMAX - H100 nvupstream</h1>
-                <div class="subtitle">Token throughput vs latency & interactivity from nvupstream H100 run (GitHub Actions 19357558473)</div>
-                <div class="chip-row">
-                    <span class="chip">Llama3 70B</span>
-                    <span class="chip">Tensor Parallel variants</span>
-                    <span class="chip">FP8 / BF16</span>
-                </div>
+            <div class="title">
+                <h1>InferenceMAX Dashboard</h1>
+                <div class="subtitle">Explore H100 nvupstream runs with selectable model, ISL/OSL, precision, and metrics.</div>
             </div>
-            <label>
-                Data source
-                <select id="datasetSelect">
-                    <option value="h100_results.json" selected>nvupstream H100 (local)</option>
-                    <option value="results.json">Gaudi3 sample</option>
-                </select>
+            <label class="dataset-picker">
+                Workflow run
+                <select id="datasetSelect"></select>
             </label>
         </header>
 
-        <div class="controls">
-            <label>
-                Precision
-                <select id="precisionFilter">
-                    <option value="all">All</option>
-                    <option value="fp8">FP8</option>
-                    <option value="bf16">BF16</option>
-                </select>
-            </label>
-            <label>
-                Tensor Parallel
-                <select id="tpFilter">
-                    <option value="all">All</option>
-                    <option value="1">TP=1</option>
-                    <option value="2">TP=2</option>
-                    <option value="4">TP=4</option>
-                    <option value="8">TP=8</option>
-                </select>
-            </label>
+        <div class="filters">
+            <div>
+                <span class="filter-label">Model</span>
+                <select id="modelFilter"></select>
+            </div>
+            <div>
+                <span class="filter-label">ISL / OSL</span>
+                <select id="islOslFilter"></select>
+            </div>
+            <div>
+                <span class="filter-label">Precision</span>
+                <select id="precisionFilter"></select>
+            </div>
+            <div>
+                <span class="filter-label">Y-Axis Metric</span>
+                <select id="yMetric"></select>
+            </div>
+        </div>
+
+        <div class="meta-row">
+            <div>Run Date: <strong id="runDate">-</strong></div>
+            <div>Workflow Runs: <a id="workflowLink" href="#" target="_blank" rel="noopener">open</a></div>
         </div>
 
         <div class="grid">
@@ -219,20 +160,20 @@
             </div>
             <div class="panel">
                 <h2>Legend</h2>
-                <div id="legendContent" class="chip-row"></div>
+                <div id="legendContent" class="legend"></div>
             </div>
         </div>
 
         <div class="panel">
-            <h2>Throughput relationships</h2>
+            <h2>Charts</h2>
             <div class="chart-grid">
                 <div class="chart-wrapper">
-                    <h3 style="margin:0 0 8px 0">Token Throughput per GPU vs End-to-end Latency</h3>
-                    <canvas id="latencyChart"></canvas>
+                    <h3>Y-axis metric vs concurrency</h3>
+                    <canvas id="metricChart"></canvas>
                 </div>
                 <div class="chart-wrapper">
-                    <h3 style="margin:0 0 8px 0">Token Throughput per GPU vs Interactivity</h3>
-                    <canvas id="interactivityChart"></canvas>
+                    <h3>Throughput / GPU vs E2E latency</h3>
+                    <canvas id="latencyChart"></canvas>
                 </div>
             </div>
         </div>
@@ -243,10 +184,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Hardware</th>
+                            <th>Model</th>
+                            <th>ISL/OSL</th>
+                            <th>Precision</th>
                             <th>TP</th>
                             <th>Concurrency</th>
-                            <th>Precision</th>
                             <th>Throughput/GPU</th>
                             <th>E2E Latency (s)</th>
                             <th>Interactivity</th>
@@ -254,43 +196,130 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="8" style="text-align:center; color:var(--muted);">Loading…</td></tr>
+                        <tr><td colspan="9" style="text-align:center; color:var(--muted);">Loading…</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <div class="footer">Last updated: <span id="updatedTime">-</span></div>
     </div>
 
     <script>
-        let rawData = [];
+        const palette = ['#2563eb', '#f97316', '#10b981', '#a855f7', '#eab308', '#ef4444'];
         let charts = {};
-        const palette = ['#22c55e', '#f97316', '#38bdf8', '#a855f7', '#eab308', '#ef4444'];
+        let rawData = [];
+        let currentMeta = {};
+
+        const metricOptions = {
+            throughput_per_gpu: { label: 'Token Throughput per GPU', format: (v) => `${v.toFixed(1)} tok/s` },
+            e2e_latency: { label: 'E2E Latency (s)', format: (v) => `${v.toFixed(2)} s` },
+            interactivity: { label: 'Interactivity', format: (v) => v.toFixed(2) },
+            ttft: { label: 'TTFT (s)', format: (v) => v ? `${v.toFixed(3)} s` : '-' },
+        };
+
+        const datasetSources = {
+            'gptoss-h100': { label: 'H100 gpt-oss (latest)', src: 'gptoss_h100.json' },
+            'h100-nvupstream': { label: 'nvupstream H100 sample', src: 'h100_results.json' },
+            'gaudi3-sample': { label: 'Gaudi3 sample', src: 'results.json' },
+        };
 
         document.getElementById('datasetSelect').addEventListener('change', loadData);
+        document.getElementById('modelFilter').addEventListener('change', refreshUI);
+        document.getElementById('islOslFilter').addEventListener('change', refreshUI);
         document.getElementById('precisionFilter').addEventListener('change', refreshUI);
-        document.getElementById('tpFilter').addEventListener('change', refreshUI);
+        document.getElementById('yMetric').addEventListener('change', refreshUI);
+
+        populateDatasetSelect();
+        loadData();
 
         async function loadData() {
-            const src = document.getElementById('datasetSelect').value;
+            const datasetId = document.getElementById('datasetSelect').value;
+            const dataset = datasetSources[datasetId];
             try {
-                const resp = await fetch(src);
-                rawData = await resp.json();
+                const resp = await fetch(dataset.src);
+                const payload = await resp.json();
+                const { entries, meta } = unpackPayload(payload, dataset);
+                currentMeta = meta;
+                rawData = normalize(entries);
+                populateFilterOptions(rawData);
                 refreshUI();
-                document.getElementById('updatedTime').textContent = new Date().toLocaleString();
+                updateMeta(meta);
             } catch (err) {
                 console.error('Failed to load dataset', err);
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" style="color:#ef4444">Could not load data file.</td></tr>';
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="color:#ef4444">Could not load data file.</td></tr>';
             }
         }
 
+        function unpackPayload(payload, dataset) {
+            if (Array.isArray(payload)) {
+                return { entries: payload, meta: { runName: dataset.label, runDate: '-', workflowUrl: dataset.src } };
+            }
+            return {
+                entries: payload.entries || [],
+                meta: {
+                    runName: payload.runName || dataset.label,
+                    runDate: payload.runDate || '-',
+                    workflowUrl: payload.workflowUrl || dataset.src,
+                }
+            };
+        }
+
+        function normalize(rows) {
+            return rows.map((r) => {
+                const isl = r.isl || (r.isl_osl ? String(r.isl_osl).split('/')[0] : 'Y');
+                const osl = r.osl || (r.isl_osl ? String(r.isl_osl).split('/')[1] : 'Y');
+                return {
+                    hardware: r.hardware || r.hw || 'H100',
+                    model: r.model || 'Unknown model',
+                    precision: (r.precision || r.prec || 'unknown').toLowerCase(),
+                    tp: Number(r.tp || r.tensor_parallel || 1),
+                    concurrency: Number(r.concurrency || r.conc || r.concurency || 0),
+                    throughput_per_gpu: Number(r.throughput_per_gpu || r.tput_per_gpu || 0),
+                    e2e_latency: Number(r.e2e_latency || r.mean_e2el || 0),
+                    interactivity: Number(r.interactivity || r.mean_intvty || 0),
+                    ttft: r.ttft !== undefined ? Number(r.ttft) : Number(r.mean_ttft || 0),
+                    isl,
+                    osl,
+                    isl_osl: `${isl}/${osl}`
+                };
+            });
+        }
+
+        function populateDatasetSelect() {
+            const select = document.getElementById('datasetSelect');
+            select.innerHTML = Object.entries(datasetSources)
+                .map(([id, d]) => `<option value="${id}">${d.label}</option>`)
+                .join('');
+        }
+
+        function populateFilterOptions(rows) {
+            const modelSelect = document.getElementById('modelFilter');
+            const islSelect = document.getElementById('islOslFilter');
+            const precisionSelect = document.getElementById('precisionFilter');
+            const metricSelect = document.getElementById('yMetric');
+
+            const uniqueModels = ['all', ...new Set(rows.map(r => r.model))];
+            modelSelect.innerHTML = uniqueModels.map(m => `<option value="${m}">${m === 'all' ? 'All models' : m}</option>`).join('');
+
+            const uniqueIslOsl = ['all', ...new Set(rows.map(r => r.isl_osl))];
+            islSelect.innerHTML = uniqueIslOsl.map(v => `<option value="${v}">${v === 'all' ? 'All' : v}</option>`).join('');
+
+            const uniquePrec = ['all', ...new Set(rows.map(r => r.precision))];
+            precisionSelect.innerHTML = uniquePrec.map(p => `<option value="${p}">${p === 'all' ? 'All' : p.toUpperCase()}</option>`).join('');
+
+            metricSelect.innerHTML = Object.entries(metricOptions)
+                .map(([key, meta]) => `<option value="${key}">${meta.label}</option>`)
+                .join('');
+            metricSelect.value = 'throughput_per_gpu';
+        }
+
         function applyFilters(data) {
+            const model = document.getElementById('modelFilter').value;
+            const islOsl = document.getElementById('islOslFilter').value;
             const precision = document.getElementById('precisionFilter').value;
-            const tp = document.getElementById('tpFilter').value;
             return data.filter(r => {
+                if (model !== 'all' && r.model !== model) return false;
+                if (islOsl !== 'all' && r.isl_osl !== islOsl) return false;
                 if (precision !== 'all' && r.precision !== precision) return false;
-                if (tp !== 'all' && Number(r.tp) !== Number(tp)) return false;
                 return true;
             });
         }
@@ -317,90 +346,119 @@
             document.getElementById('configCount').textContent = rows.length;
         }
 
-        function groupByKey(rows) {
-            const groups = new Map();
-            rows.forEach(r => {
-                const key = `${r.hardware || 'H100'} · ${r.precision}`;
-                if (!groups.has(key)) groups.set(key, []);
-                groups.get(key).push(r);
-            });
-            return groups;
-        }
-
         function buildLegend(rows) {
             const legend = document.getElementById('legendContent');
             legend.innerHTML = '';
-            const groups = Array.from(groupByKey(rows).keys());
-            groups.forEach((name, idx) => {
-                const chip = document.createElement('span');
-                chip.className = 'chip';
-                chip.style.borderColor = palette[idx % palette.length];
-                chip.style.color = palette[idx % palette.length];
-                chip.textContent = name;
-                legend.appendChild(chip);
+            const groups = Array.from(new Set(rows.map(r => `TP${r.tp} · ${r.precision.toUpperCase()}`)));
+            groups.forEach((label, idx) => {
+                const span = document.createElement('span');
+                span.className = 'chip';
+                span.style.borderColor = palette[idx % palette.length];
+                span.style.color = palette[idx % palette.length];
+                span.textContent = label;
+                legend.appendChild(span);
             });
+        }
+
+        function groupBy(arr, fn) {
+            return arr.reduce((acc, item) => {
+                const key = fn(item);
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(item);
+                return acc;
+            }, {});
         }
 
         function renderCharts(rows) {
-            renderScatter('latencyChart', rows, {
-                xKey: 'e2e_latency',
-                xLabel: 'E2E Latency (s) ↓',
-                yKey: 'throughput_per_gpu',
-                yLabel: 'Token Throughput / GPU',
-            });
-            renderScatter('interactivityChart', rows, {
-                xKey: 'interactivity',
-                xLabel: 'Token Throughput / User (interactivity) ↑',
-                yKey: 'throughput_per_gpu',
-                yLabel: 'Token Throughput / GPU',
-            });
+            renderMetricChart(rows);
+            renderLatencyChart(rows);
         }
 
-        function renderScatter(canvasId, rows, { xKey, xLabel, yKey, yLabel }) {
-            const ctx = document.getElementById(canvasId);
-            if (charts[canvasId]) charts[canvasId].destroy();
+        function renderMetricChart(rows) {
+            const metricKey = document.getElementById('yMetric').value;
+            const meta = metricOptions[metricKey];
+            const ctx = document.getElementById('metricChart');
+            if (charts.metricChart) charts.metricChart.destroy();
 
-            const grouped = groupByKey(rows);
-            const datasets = Array.from(grouped.entries()).map(([name, points], idx) => {
-                const sorted = [...points].sort((a, b) => a[xKey] - b[xKey]);
+            const grouped = groupBy(rows, r => `TP${r.tp} · ${r.precision.toUpperCase()}`);
+            const datasets = Object.entries(grouped).map(([name, points], idx) => {
+                const sorted = [...points].sort((a, b) => a.concurrency - b.concurrency);
                 return {
                     label: name,
-                    data: sorted.map(p => ({ x: p[xKey], y: p[yKey], pointLabel: `TP${p.tp} C${p.concurrency}` })),
+                    data: sorted.map(p => ({ x: p.concurrency, y: p[metricKey], pointLabel: `${p.model} · C${p.concurrency}` })),
                     borderColor: palette[idx % palette.length],
                     backgroundColor: palette[idx % palette.length],
-                    showLine: true,
                     tension: 0.2,
                     pointRadius: 5,
                     borderWidth: 2,
+                    showLine: true,
                 };
             });
 
-            charts[canvasId] = new Chart(ctx, {
+            charts.metricChart = new Chart(ctx, {
                 type: 'scatter',
                 data: { datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
                                     const raw = ctx.raw;
-                                    return `${ctx.dataset.label} — ${raw.pointLabel}: ${raw.y.toFixed(1)} tok/s @ ${raw.x.toFixed(2)}`;
+                                    return `${ctx.dataset.label} — ${raw.pointLabel}: ${meta.format(raw.y)}`;
                                 }
                             }
-                        },
-                        legend: { display: false },
+                        }
                     },
                     scales: {
-                        x: {
-                            title: { display: true, text: xLabel },
-                            grid: { color: 'rgba(148,163,184,0.1)' }
-                        },
-                        y: {
-                            title: { display: true, text: yLabel },
-                            grid: { color: 'rgba(148,163,184,0.1)' }
+                        x: { title: { display: true, text: 'Concurrency' }, grid: { color: 'rgba(15,23,42,0.05)' } },
+                        y: { title: { display: true, text: meta.label }, grid: { color: 'rgba(15,23,42,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function renderLatencyChart(rows) {
+            const ctx = document.getElementById('latencyChart');
+            if (charts.latencyChart) charts.latencyChart.destroy();
+
+            const grouped = groupBy(rows, r => `TP${r.tp} · ${r.precision.toUpperCase()}`);
+            const datasets = Object.entries(grouped).map(([name, points], idx) => {
+                const sorted = [...points].sort((a, b) => a.e2e_latency - b.e2e_latency);
+                return {
+                    label: name,
+                    data: sorted.map(p => ({ x: p.e2e_latency, y: p.throughput_per_gpu, pointLabel: `${p.model} · C${p.concurrency}` })),
+                    borderColor: palette[idx % palette.length],
+                    backgroundColor: palette[idx % palette.length],
+                    tension: 0.15,
+                    pointRadius: 5,
+                    borderWidth: 2,
+                    showLine: true,
+                };
+            });
+
+            charts.latencyChart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const raw = ctx.raw;
+                                    return `${ctx.dataset.label} — ${raw.pointLabel}: ${raw.y.toFixed(1)} tok/s @ ${raw.x.toFixed(2)}s`;
+                                }
+                            }
                         }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'E2E Latency (s) ↓' }, grid: { color: 'rgba(15,23,42,0.05)' } },
+                        y: { title: { display: true, text: 'Token Throughput per GPU' }, grid: { color: 'rgba(15,23,42,0.05)' } }
                     }
                 }
             });
@@ -409,17 +467,18 @@
         function buildTable(rows) {
             const body = document.getElementById('tableBody');
             if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--muted);">No rows match the filters</td></tr>';
+                body.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--muted);">No rows match the filters</td></tr>';
                 return;
             }
             body.innerHTML = rows
                 .sort((a, b) => b.throughput_per_gpu - a.throughput_per_gpu)
                 .map(r => `
                     <tr>
-                        <td>${r.hardware || 'H100'}</td>
+                        <td>${r.model}</td>
+                        <td>${r.isl_osl}</td>
+                        <td>${r.precision.toUpperCase()}</td>
                         <td>${r.tp}</td>
                         <td>${r.concurrency}</td>
-                        <td>${r.precision}</td>
                         <td>${r.throughput_per_gpu.toFixed(1)}</td>
                         <td>${r.e2e_latency.toFixed(2)}</td>
                         <td>${r.interactivity.toFixed(2)}</td>
@@ -428,7 +487,10 @@
                 `).join('');
         }
 
-        loadData();
+        function updateMeta(meta) {
+            document.getElementById('runDate').textContent = meta.runDate || '-';
+            document.getElementById('workflowLink').href = meta.workflowUrl || '#';
+        }
     </script>
 </body>
 </html>
