@@ -158,10 +158,6 @@
                 <div class="stat"><span class="label">Best interactivity</span><span class="value" id="bestInteractivity">-</span></div>
                 <div class="stat"><span class="label">Configurations</span><span class="value" id="configCount">-</span></div>
             </div>
-            <div class="panel">
-                <h2>Legend</h2>
-                <div id="legendContent" class="legend"></div>
-            </div>
         </div>
 
         <div class="panel">
@@ -176,29 +172,9 @@
                     <canvas id="latencyChart"></canvas>
                 </div>
             </div>
-        </div>
-
-        <div class="panel">
-            <h2>Raw configurations</h2>
-            <div class="chart-wrapper" style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Model</th>
-                            <th>ISL/OSL</th>
-                            <th>Precision</th>
-                            <th>TP</th>
-                            <th>Concurrency</th>
-                            <th>Throughput/GPU</th>
-                            <th>E2E Latency (s)</th>
-                            <th>Interactivity</th>
-                            <th>TTFT (s)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="9" style="text-align:center; color:var(--muted);">Loading…</td></tr>
-                    </tbody>
-                </table>
+            <div class="selection" id="selectionBox" hidden>
+                <div class="selection-title">Selected point</div>
+                <div class="selection-row" id="selectionDetails"></div>
             </div>
         </div>
     </div>
@@ -208,6 +184,7 @@
         let charts = {};
         let rawData = [];
         let currentMeta = {};
+        let selectedPoint = null;
 
         const metricOptions = {
             throughput_per_gpu: { label: 'Token Throughput per GPU', format: (v) => `${v.toFixed(1)} tok/s` },
@@ -325,11 +302,10 @@
         }
 
         function refreshUI() {
+            clearSelectionBox();
             const filtered = applyFilters(rawData);
             updateStats(filtered);
-            buildLegend(filtered);
             renderCharts(filtered);
-            buildTable(filtered);
         }
 
         function updateStats(rows) {
@@ -346,20 +322,6 @@
             document.getElementById('configCount').textContent = rows.length;
         }
 
-        function buildLegend(rows) {
-            const legend = document.getElementById('legendContent');
-            legend.innerHTML = '';
-            const groups = Array.from(new Set(rows.map(r => `TP${r.tp} · ${r.precision.toUpperCase()}`)));
-            groups.forEach((label, idx) => {
-                const span = document.createElement('span');
-                span.className = 'chip';
-                span.style.borderColor = palette[idx % palette.length];
-                span.style.color = palette[idx % palette.length];
-                span.textContent = label;
-                legend.appendChild(span);
-            });
-        }
-
         function groupBy(arr, fn) {
             return arr.reduce((acc, item) => {
                 const key = fn(item);
@@ -367,6 +329,63 @@
                 acc[key].push(item);
                 return acc;
             }, {});
+        }
+
+        function isSelected(chartKey, datasetIndex, dataIndex) {
+            return selectedPoint && selectedPoint.chartKey === chartKey && selectedPoint.datasetIndex === datasetIndex && selectedPoint.dataIndex === dataIndex;
+        }
+
+        function createDataset(name, points, idx, chartKey, mapper, tension = 0.2) {
+            const color = palette[idx % palette.length];
+            return {
+                label: name,
+                data: points.map(mapper),
+                borderColor: color,
+                backgroundColor: color,
+                tension,
+                pointRadius: (ctx) => isSelected(chartKey, ctx.datasetIndex, ctx.dataIndex) ? 7 : 5,
+                pointBackgroundColor: (ctx) => isSelected(chartKey, ctx.datasetIndex, ctx.dataIndex) ? '#0f172a' : color,
+                pointBorderColor: (ctx) => isSelected(chartKey, ctx.datasetIndex, ctx.dataIndex) ? '#0f172a' : color,
+                borderWidth: 2,
+                showLine: true,
+            };
+        }
+
+        function handlePointClick(chartKey, chart, evt) {
+            const elements = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (!elements.length) return;
+            const { datasetIndex, index } = elements[0];
+            const dataset = chart.data.datasets[datasetIndex];
+            const point = dataset.data[index];
+            selectedPoint = { chartKey, datasetIndex, dataIndex: index, datasetLabel: dataset.label, point };
+            updateSelectionBox(chartKey, dataset.label, point);
+            chart.update();
+        }
+
+        function clearSelectionBox() {
+            selectedPoint = null;
+            const box = document.getElementById('selectionBox');
+            box.hidden = true;
+            document.getElementById('selectionDetails').innerHTML = '';
+        }
+
+        function updateSelectionBox(chartKey, label, point) {
+            const box = document.getElementById('selectionBox');
+            const details = document.getElementById('selectionDetails');
+            const r = point.raw;
+            details.innerHTML = `
+                <span><strong>Chart:</strong> ${chartKey === 'metric' ? 'Metric vs Concurrency' : 'Throughput vs Latency'}</span>
+                <span><strong>Series:</strong> ${label}</span>
+                <span><strong>Model:</strong> ${r.model}</span>
+                <span><strong>Precision:</strong> ${r.precision.toUpperCase()}</span>
+                <span><strong>TP:</strong> ${r.tp}</span>
+                <span><strong>Concurrency:</strong> ${r.concurrency}</span>
+                <span><strong>Throughput/GPU:</strong> ${r.throughput_per_gpu.toFixed(1)} tok/s</span>
+                <span><strong>E2E latency:</strong> ${r.e2e_latency.toFixed(2)} s</span>
+                <span><strong>Interactivity:</strong> ${r.interactivity.toFixed(2)}</span>
+                <span><strong>TTFT:</strong> ${r.ttft ? r.ttft.toFixed(3) + ' s' : '-'}</span>
+            `;
+            box.hidden = false;
         }
 
         function renderCharts(rows) {
@@ -383,16 +402,12 @@
             const grouped = groupBy(rows, r => `TP${r.tp} · ${r.precision.toUpperCase()}`);
             const datasets = Object.entries(grouped).map(([name, points], idx) => {
                 const sorted = [...points].sort((a, b) => a.concurrency - b.concurrency);
-                return {
-                    label: name,
-                    data: sorted.map(p => ({ x: p.concurrency, y: p[metricKey], pointLabel: `${p.model} · C${p.concurrency}` })),
-                    borderColor: palette[idx % palette.length],
-                    backgroundColor: palette[idx % palette.length],
-                    tension: 0.2,
-                    pointRadius: 5,
-                    borderWidth: 2,
-                    showLine: true,
-                };
+                return createDataset(name, sorted, idx, 'metric', (p) => ({
+                    x: p.concurrency,
+                    y: p[metricKey],
+                    raw: p,
+                    pointLabel: `${p.model} · C${p.concurrency}`
+                }), 0.2);
             });
 
             charts.metricChart = new Chart(ctx, {
@@ -415,7 +430,8 @@
                     scales: {
                         x: { title: { display: true, text: 'Concurrency' }, grid: { color: 'rgba(15,23,42,0.05)' } },
                         y: { title: { display: true, text: meta.label }, grid: { color: 'rgba(15,23,42,0.05)' } }
-                    }
+                    },
+                    onClick: (evt, elements, chart) => handlePointClick('metric', chart, evt)
                 }
             });
         }
@@ -427,16 +443,12 @@
             const grouped = groupBy(rows, r => `TP${r.tp} · ${r.precision.toUpperCase()}`);
             const datasets = Object.entries(grouped).map(([name, points], idx) => {
                 const sorted = [...points].sort((a, b) => a.e2e_latency - b.e2e_latency);
-                return {
-                    label: name,
-                    data: sorted.map(p => ({ x: p.e2e_latency, y: p.throughput_per_gpu, pointLabel: `${p.model} · C${p.concurrency}` })),
-                    borderColor: palette[idx % palette.length],
-                    backgroundColor: palette[idx % palette.length],
-                    tension: 0.15,
-                    pointRadius: 5,
-                    borderWidth: 2,
-                    showLine: true,
-                };
+                return createDataset(name, sorted, idx, 'latency', (p) => ({
+                    x: p.e2e_latency,
+                    y: p.throughput_per_gpu,
+                    raw: p,
+                    pointLabel: `${p.model} · C${p.concurrency}`
+                }), 0.15);
             });
 
             charts.latencyChart = new Chart(ctx, {
@@ -446,7 +458,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom' },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => {
@@ -459,32 +471,10 @@
                     scales: {
                         x: { title: { display: true, text: 'E2E Latency (s) ↓' }, grid: { color: 'rgba(15,23,42,0.05)' } },
                         y: { title: { display: true, text: 'Token Throughput per GPU' }, grid: { color: 'rgba(15,23,42,0.05)' } }
-                    }
+                    },
+                    onClick: (evt, elements, chart) => handlePointClick('latency', chart, evt)
                 }
             });
-        }
-
-        function buildTable(rows) {
-            const body = document.getElementById('tableBody');
-            if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--muted);">No rows match the filters</td></tr>';
-                return;
-            }
-            body.innerHTML = rows
-                .sort((a, b) => b.throughput_per_gpu - a.throughput_per_gpu)
-                .map(r => `
-                    <tr>
-                        <td>${r.model}</td>
-                        <td>${r.isl_osl}</td>
-                        <td>${r.precision.toUpperCase()}</td>
-                        <td>${r.tp}</td>
-                        <td>${r.concurrency}</td>
-                        <td>${r.throughput_per_gpu.toFixed(1)}</td>
-                        <td>${r.e2e_latency.toFixed(2)}</td>
-                        <td>${r.interactivity.toFixed(2)}</td>
-                        <td>${r.ttft ? r.ttft.toFixed(3) : '-'}</td>
-                    </tr>
-                `).join('');
         }
 
         function updateMeta(meta) {
