@@ -1,0 +1,222 @@
+[
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 8,
+    "concurrency": 32,
+    "throughput_per_gpu": 327.6161755206977,
+    "e2e_latency": 21.78512649911645,
+    "interactivity": 42.8869316004796,
+    "ttft": 0.07536989054642618
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 8,
+    "concurrency": 64,
+    "throughput_per_gpu": 590.7691236074261,
+    "e2e_latency": 23.92848396172449,
+    "interactivity": 39.066420991398324,
+    "ttft": 0.07627953193150461
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 4,
+    "concurrency": 64,
+    "throughput_per_gpu": 969.824301485957,
+    "e2e_latency": 29.282550546410857,
+    "interactivity": 32.06571669753381,
+    "ttft": 0.11786912498064339
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 4,
+    "concurrency": 32,
+    "throughput_per_gpu": 582.0831740848987,
+    "e2e_latency": 24.557634633647105,
+    "interactivity": 38.030872443204316,
+    "ttft": 0.11397828604094684
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 4,
+    "concurrency": 32,
+    "throughput_per_gpu": 581.9037272424982,
+    "e2e_latency": 24.573994944948208,
+    "interactivity": 38.03238173539927,
+    "ttft": 0.11421303043607622
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 2,
+    "concurrency": 4,
+    "throughput_per_gpu": 113.86632446407546,
+    "e2e_latency": 31.32764925166266,
+    "interactivity": 29.46755913660209,
+    "ttft": 0.19976927363313735
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 8,
+    "concurrency": 4,
+    "throughput_per_gpu": 46.05881700792868,
+    "e2e_latency": 19.336405662901235,
+    "interactivity": 47.74805907399312,
+    "ttft": 0.06640372343827039
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 2,
+    "concurrency": 32,
+    "throughput_per_gpu": 745.2466500920287,
+    "e2e_latency": 38.40398659752172,
+    "interactivity": 24.45022356172314,
+    "ttft": 0.2049413111526519
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 4,
+    "concurrency": 16,
+    "throughput_per_gpu": 322.8831281446792,
+    "e2e_latency": 22.237993773649215,
+    "interactivity": 41.52260614041444,
+    "ttft": 0.11312025657389313
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 8,
+    "concurrency": 32,
+    "throughput_per_gpu": 327.0455393701155,
+    "e2e_latency": 21.809277457188728,
+    "interactivity": 42.94816885419736,
+    "ttft": 0.06990175356622785
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 4,
+    "concurrency": 4,
+    "throughput_per_gpu": 86.1755579314326,
+    "e2e_latency": 20.70115078163799,
+    "interactivity": 44.5316830886857,
+    "ttft": 0.11211078253109008
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 4,
+    "concurrency": 8,
+    "throughput_per_gpu": 170.37683836807673,
+    "e2e_latency": 21.203602297999897,
+    "interactivity": 44.03888175184009,
+    "ttft": 0.1118223121156916
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 4,
+    "concurrency": 4,
+    "throughput_per_gpu": 86.13956283834021,
+    "e2e_latency": 20.70545368308667,
+    "interactivity": 44.53065164616256,
+    "ttft": 0.11220620793756098
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 2,
+    "concurrency": 8,
+    "throughput_per_gpu": 223.04105615470363,
+    "e2e_latency": 32.39991630440345,
+    "interactivity": 28.864910591528673,
+    "ttft": 0.20024483639281243
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 2,
+    "concurrency": 16,
+    "throughput_per_gpu": 420.2449857892258,
+    "e2e_latency": 34.19197720106895,
+    "interactivity": 26.986660673235704,
+    "ttft": 0.20251939294394106
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 8,
+    "concurrency": 64,
+    "throughput_per_gpu": 592.8983253544081,
+    "e2e_latency": 23.857601567367237,
+    "interactivity": 39.27628725458311,
+    "ttft": 0.07602983806282282
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 4,
+    "concurrency": 64,
+    "throughput_per_gpu": 974.2990250444853,
+    "e2e_latency": 29.146065719642866,
+    "interactivity": 32.049839389099496,
+    "ttft": 0.11758525040932
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 4,
+    "concurrency": 16,
+    "throughput_per_gpu": 322.6086776269144,
+    "e2e_latency": 22.262538114128983,
+    "interactivity": 41.46221498228725,
+    "ttft": 0.11290515505243093
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "fp8",
+    "tp": 2,
+    "concurrency": 32,
+    "throughput_per_gpu": 748.7409793943891,
+    "e2e_latency": 38.21887014544554,
+    "interactivity": 24.449197571803275,
+    "ttft": 0.20510443253442645
+  },
+  {
+    "hardware": "H100",
+    "model": "meta-llama/Llama-3.3-70B-Instruct",
+    "precision": "bf16",
+    "tp": 8,
+    "concurrency": 16,
+    "throughput_per_gpu": 180.55046799600586,
+    "e2e_latency": 19.87739843383606,
+    "interactivity": 46.50693084100792,
+    "ttft": 0.070272671058774
+  }
+]

@@ -3,511 +3,1051 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InferenceMAX Dashboard - Gaudi3 Benchmarks</title>
+    <title>InferenceMAX Dashboard</title>
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --border: #dfe3ec;
+            --text: #0f172a;
+            --muted: #6b7280;
+            --accent: #2563eb;
         }
+
+        * { box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            padding: 20px;
-            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 32px;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .page { max-width: 1400px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
         }
 
-        h1 {
-            text-align: center;
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .title h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
+        .subtitle { margin-top: 6px; color: var(--muted); }
+
+        .dataset-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--muted);
         }
 
-        .subtitle {
-            text-align: center;
-            font-size: 1.2em;
-            margin-bottom: 40px;
-            opacity: 0.9;
+        select {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            min-width: 200px;
+            font-size: 14px;
+            color: var(--text);
         }
 
         .filters {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .filter-group label {
-            font-size: 0.9em;
-            font-weight: 600;
-        }
-
-        select, input {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            font-size: 1em;
-            cursor: pointer;
-            min-width: 150px;
-        }
-
-        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 10px;
         }
 
-        .stat-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            transition: transform 0.2s;
+        .filter-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(15,23,42,0.08);
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
+        .panel h2 { margin: 0 0 12px 0; font-size: 18px; }
 
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin: 10px 0;
-        }
+        .chart-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
+        .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; min-height: 360px; }
+        .chart-wrapper h3 { margin: 0 0 6px 0; font-size: 15px; color: var(--muted); }
 
-        .chart-container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-
-        .chart-title {
-            color: #333;
-            font-size: 1.5em;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        canvas {
-            max-height: 400px;
-        }
-
-        .data-table {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 15px;
-            overflow-x: auto;
-            margin-top: 30px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            color: #333;
-        }
-
-        th, td {
+        .selection {
+            margin-top: 12px;
             padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text);
         }
 
-        th {
-            background: #667eea;
-            color: white;
-            font-weight: 600;
+        .selection-title {
+            font-weight: 700;
+            font-size: 14px;
         }
 
-        tr:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
+        .selection-row { display: grid; gap: 4px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 
-        .loading {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.5em;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; }
+        tbody tr:hover { background: #f4f6fb; }
 
-        .refresh-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid white;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s;
-        }
-
-        .refresh-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .last-updated {
-            text-align: center;
-            margin-top: 20px;
-            opacity: 0.8;
-            font-size: 0.9em;
-        }
+        .legend { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); background: #f8fafc; font-weight: 600; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 InferenceMAX Dashboard</h1>
-        <p class="subtitle">Real-time Gaudi3 70B Benchmark Results</p>
+    <div class="page">
+        <header>
+            <div class="title">
+                <h1>InferenceMAX Dashboard</h1>
+            <div class="subtitle">Explore H100 nvupstream runs with selectable model, ISL/OSL, precision, and metrics.</div>
+        </div>
+        <label class="dataset-picker">
+            Workflow run
+            <select id="datasetSelect"></select>
+        </label>
+    </header>
 
         <div class="filters">
-            <div class="filter-group">
-                <label>Hardware</label>
-                <select id="hwFilter">
-                    <option value="all">All Hardware</option>
-                    <option value="gaudi25">Gaudi3 (gaudi25)</option>
-                </select>
+            <div>
+                <span class="filter-label">Model</span>
+                <select id="modelFilter"></select>
             </div>
-            <div class="filter-group">
-                <label>Precision</label>
-                <select id="precisionFilter">
-                    <option value="all">All Precision</option>
-                    <option value="fp8">FP8</option>
-                    <option value="bf16">BF16</option>
-                </select>
+            <div>
+                <span class="filter-label">ISL / OSL</span>
+                <select id="islOslFilter"></select>
             </div>
-            <div class="filter-group">
-                <label>Tensor Parallel</label>
-                <select id="tpFilter">
-                    <option value="all">All TP</option>
-                    <option value="1">TP=1</option>
-                    <option value="2">TP=2</option>
-                    <option value="4">TP=4</option>
-                    <option value="8">TP=8</option>
-                </select>
+            <div>
+                <span class="filter-label">Precision</span>
+                <select id="precisionFilter"></select>
             </div>
-            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Peak Throughput</div>
-                <div class="stat-value" id="peakThroughput">-</div>
-                <div class="stat-label">tokens/sec/GPU</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Best Latency (TTFT)</div>
-                <div class="stat-value" id="bestLatency">-</div>
-                <div class="stat-label">seconds</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Configurations</div>
-                <div class="stat-value" id="totalConfigs">-</div>
-                <div class="stat-label">tested</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Best Interactivity</div>
-                <div class="stat-value" id="bestInteractivity">-</div>
-                <div class="stat-label">tokens/sec/user</div>
+            <div>
+                <span class="filter-label">Y-Axis Metric</span>
+                <select id="yMetric"></select>
             </div>
         </div>
 
-        <div class="chart-container">
-            <h2 class="chart-title">📈 Throughput vs Latency (Pareto Frontier)</h2>
-            <canvas id="paretoChart"></canvas>
+        <div class="panel">
+            <h2>Charts</h2>
+            <div class="chart-grid">
+                <div class="chart-wrapper">
+                    <h3>Y-axis metric vs concurrency</h3>
+                    <canvas id="metricChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Throughput / GPU vs E2E latency</h3>
+                    <canvas id="latencyChart"></canvas>
+                </div>
+            </div>
+            <div class="selection" id="selectionBox" hidden>
+                <div class="selection-title">Selected point</div>
+                <div class="selection-row" id="selectionDetails"></div>
+            </div>
         </div>
-
-        <div class="chart-container">
-            <h2 class="chart-title">⚡ Performance by Tensor Parallelism</h2>
-            <canvas id="tpChart"></canvas>
-        </div>
-
-        <div class="chart-container">
-            <h2 class="chart-title">🎯 Throughput by Concurrency</h2>
-            <canvas id="concChart"></canvas>
-        </div>
-
-        <div class="data-table">
-            <h2 class="chart-title">📊 Detailed Results</h2>
-            <table id="resultsTable">
-                <thead>
-                    <tr>
-                        <th>Hardware</th>
-                        <th>TP</th>
-                        <th>Concurrency</th>
-                        <th>Precision</th>
-                        <th>Throughput/GPU</th>
-                        <th>TTFT (p99)</th>
-                        <th>Interactivity</th>
-                        <th>E2E Latency</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsBody">
-                    <tr><td colspan="8" class="loading">Loading data...</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <p class="last-updated">Last updated: <span id="lastUpdated">-</span></p>
     </div>
 
-    <script>
-        let allResults = [];
-        let charts = {};
+    <script type="application/json" id="data-gptoss-h100">
+        {
+          "runName": "H100 gpt-oss latest",
+          "runDate": "2025-12-01T00:08:36Z",
+          "workflowUrl": "https://github.com/sureshnam/InferenceMAX/actions/runs/19357558473",
+          "entries": [
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 12B",
+              "precision": "fp4",
+              "tp": 8,
+              "concurrency": 32,
+              "throughput_per_gpu": 327.6161755206977,
+              "e2e_latency": 21.78512649911645,
+              "interactivity": 42.8869316004796,
+              "ttft": 0.07536989054642618,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 12B",
+              "precision": "fp4",
+              "tp": 8,
+              "concurrency": 16,
+              "throughput_per_gpu": 250.62887176034885,
+              "e2e_latency": 14.11312409507824,
+              "interactivity": 27.3540627689398,
+              "ttft": 0.07494005849730492,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 12B",
+              "precision": "fp4",
+              "tp": 8,
+              "concurrency": 8,
+              "throughput_per_gpu": 155.24179020524434,
+              "e2e_latency": 8.732380374550447,
+              "interactivity": 16.94568859448316,
+              "ttft": 0.07470951038684472,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 12B",
+              "precision": "fp4",
+              "tp": 8,
+              "concurrency": 4,
+              "throughput_per_gpu": 83.31282787677974,
+              "e2e_latency": 6.972498996254931,
+              "interactivity": 11.682493139291552,
+              "ttft": 0.07189072895000949,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 12B",
+              "precision": "fp4",
+              "tp": 8,
+              "concurrency": 2,
+              "throughput_per_gpu": 41.628788045106516,
+              "e2e_latency": 6.146832871085437,
+              "interactivity": 9.324186159714993,
+              "ttft": 0.07102694942674195,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 12B",
+              "precision": "fp4",
+              "tp": 8,
+              "concurrency": 1,
+              "throughput_per_gpu": 20.73107209794201,
+              "e2e_latency": 5.917416036547701,
+              "interactivity": 8.618609786437936,
+              "ttft": 0.07084894917716556,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 64,
+              "throughput_per_gpu": 472.02246034359766,
+              "e2e_latency": 15.292549407172855,
+              "interactivity": 30.47842549631242,
+              "ttft": 0.057390537680216975,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 32,
+              "throughput_per_gpu": 347.97796614583335,
+              "e2e_latency": 10.400912136713428,
+              "interactivity": 20.67781182158764,
+              "ttft": 0.05741225499471107,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 16,
+              "throughput_per_gpu": 242.12811279296872,
+              "e2e_latency": 8.287464922476686,
+              "interactivity": 16.514454933432897,
+              "ttft": 0.05721166224198673,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 8,
+              "throughput_per_gpu": 142.14401299924189,
+              "e2e_latency": 7.320414051055091,
+              "interactivity": 14.634048010307589,
+              "ttft": 0.057158287606914514,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 4,
+              "throughput_per_gpu": 76.79710133997696,
+              "e2e_latency": 6.4702930830438365,
+              "interactivity": 12.22051717401995,
+              "ttft": 0.05693083196326571,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 2,
+              "throughput_per_gpu": 38.5315638049528,
+              "e2e_latency": 6.203418723425785,
+              "interactivity": 10.703720388560744,
+              "ttft": 0.05695451536342059,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 1,
+              "throughput_per_gpu": 19.218014092932904,
+              "e2e_latency": 6.069578660100472,
+              "interactivity": 10.2368743208789,
+              "ttft": 0.05690083216141505,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 64,
+              "throughput_per_gpu": 361.1002151082357,
+              "e2e_latency": 13.547648979822794,
+              "interactivity": 26.551714867253913,
+              "ttft": 0.056865955639680555,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 32,
+              "throughput_per_gpu": 276.21160634358724,
+              "e2e_latency": 9.991112973690996,
+              "interactivity": 19.870979536506053,
+              "ttft": 0.056664544216579434,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 16,
+              "throughput_per_gpu": 194.953449434178,
+              "e2e_latency": 8.149236493303686,
+              "interactivity": 16.289479890990493,
+              "ttft": 0.056811156356177305,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 8,
+              "throughput_per_gpu": 117.91524642489626,
+              "e2e_latency": 7.384056639740274,
+              "interactivity": 14.871953468946716,
+              "ttft": 0.056598260518470555,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 4,
+              "throughput_per_gpu": 63.176850637615424,
+              "e2e_latency": 6.91476033968016,
+              "interactivity": 13.42190093991704,
+              "ttft": 0.05670795186286522,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 2,
+              "throughput_per_gpu": 32.17252667788158,
+              "e2e_latency": 6.522256248874385,
+              "interactivity": 11.915132750923689,
+              "ttft": 0.05666508914133342,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 6.7B",
+              "precision": "fp4",
+              "tp": 4,
+              "concurrency": 1,
+              "throughput_per_gpu": 16.00254646502108,
+              "e2e_latency": 6.319182339145534,
+              "interactivity": 11.369566649745965,
+              "ttft": 0.056562114655962686,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 1024,
+              "throughput_per_gpu": 899.5633044870694,
+              "e2e_latency": 5.700784987609748,
+              "interactivity": 11.099594828183804,
+              "ttft": 0.040855595603169874,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 512,
+              "throughput_per_gpu": 595.3300283101737,
+              "e2e_latency": 3.4568618287685794,
+              "interactivity": 6.517867981003264,
+              "ttft": 0.04080763432574225,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 256,
+              "throughput_per_gpu": 351.2782999680442,
+              "e2e_latency": 2.38497492608493,
+              "interactivity": 4.563944402977988,
+              "ttft": 0.04091362674516481,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 128,
+              "throughput_per_gpu": 197.92591446252527,
+              "e2e_latency": 1.8015611030720874,
+              "interactivity": 3.451051271632879,
+              "ttft": 0.04070850063157982,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 64,
+              "throughput_per_gpu": 107.74861137810126,
+              "e2e_latency": 1.4615291749235834,
+              "interactivity": 2.8309075709558247,
+              "ttft": 0.040557615371323744,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 32,
+              "throughput_per_gpu": 59.159143954532815,
+              "e2e_latency": 1.2721009530671438,
+              "interactivity": 2.4019488119327625,
+              "ttft": 0.040458372170880905,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 16,
+              "throughput_per_gpu": 32.46532503763832,
+              "e2e_latency": 1.1844554563098868,
+              "interactivity": 2.195512448223417,
+              "ttft": 0.040309938125776365,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 8,
+              "throughput_per_gpu": 17.89056454575475,
+              "e2e_latency": 1.1459512685946054,
+              "interactivity": 2.110112897116095,
+              "ttft": 0.04045051315812772,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 4,
+              "throughput_per_gpu": 9.7350248320776,
+              "e2e_latency": 1.1332299484500944,
+              "interactivity": 2.074248538979146,
+              "ttft": 0.040562239078892196,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 2,
+              "throughput_per_gpu": 5.029763879854542,
+              "e2e_latency": 1.1343443539610003,
+              "interactivity": 2.0700624056912396,
+              "ttft": 0.04026076725577047,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "gpt-oss 1.1B",
+              "precision": "fp8",
+              "tp": 1,
+              "concurrency": 1,
+              "throughput_per_gpu": 2.6522808933481743,
+              "e2e_latency": 1.134989110894278,
+              "interactivity": 2.068454289521247,
+              "ttft": 0.04020436228129982,
+              "isl": "Y",
+              "osl": "Y"
+            }
+          ]
+        }
+    </script>
 
-        // Load data from results.json
+    <script type="application/json" id="data-h100-nvupstream">
+        {
+          "runName": "nvupstream H100 sample",
+          "runDate": "2023-11-20T00:00:00Z",
+          "workflowUrl": "https://github.com/sureshnam/InferenceMAX/actions/runs/19357558473",
+          "entries": [
+            {
+              "hardware": "H100",
+              "model": "LLaMA2-70B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 32,
+              "throughput_per_gpu": 90.2,
+              "e2e_latency": 30.1,
+              "interactivity": 55.2,
+              "ttft": 0.81,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "LLaMA2-70B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 16,
+              "throughput_per_gpu": 68.4,
+              "e2e_latency": 18.4,
+              "interactivity": 35.5,
+              "ttft": 0.62,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "LLaMA2-70B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 8,
+              "throughput_per_gpu": 42.7,
+              "e2e_latency": 11.7,
+              "interactivity": 22.2,
+              "ttft": 0.54,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "LLaMA2-70B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 4,
+              "throughput_per_gpu": 23.5,
+              "e2e_latency": 8.3,
+              "interactivity": 15.4,
+              "ttft": 0.48,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "LLaMA2-70B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 2,
+              "throughput_per_gpu": 12.4,
+              "e2e_latency": 7.2,
+              "interactivity": 13.1,
+              "ttft": 0.46,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "Mixtral-8x7B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 16,
+              "throughput_per_gpu": 52.3,
+              "e2e_latency": 19.6,
+              "interactivity": 37.2,
+              "ttft": 0.73,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "Mixtral-8x7B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 8,
+              "throughput_per_gpu": 33.9,
+              "e2e_latency": 12.4,
+              "interactivity": 23.5,
+              "ttft": 0.61,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "Mixtral-8x7B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 4,
+              "throughput_per_gpu": 18.5,
+              "e2e_latency": 9.4,
+              "interactivity": 17.4,
+              "ttft": 0.55,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "Mixtral-8x7B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 2,
+              "throughput_per_gpu": 9.9,
+              "e2e_latency": 8.5,
+              "interactivity": 15.4,
+              "ttft": 0.52,
+              "isl": "Y",
+              "osl": "Y"
+            },
+            {
+              "hardware": "H100",
+              "model": "Mixtral-8x7B",
+              "precision": "fp8",
+              "tp": 8,
+              "concurrency": 1,
+              "throughput_per_gpu": 5.1,
+              "e2e_latency": 8.1,
+              "interactivity": 14.9,
+              "ttft": 0.51,
+              "isl": "Y",
+              "osl": "Y"
+            }
+          ]
+        }
+    </script>
+
+    <script>
+        const palette = ['#2563eb', '#f97316', '#10b981', '#a855f7', '#eab308', '#ef4444'];
+        let charts = {};
+        let rawData = [];
+        let selectedPoint = null;
+
+        const metricOptions = {
+            throughput_per_gpu: { label: 'Token Throughput per GPU', format: (v) => `${v.toFixed(1)} tok/s` },
+            e2e_latency: { label: 'E2E Latency (s)', format: (v) => `${v.toFixed(2)} s` },
+            interactivity: { label: 'Interactivity', format: (v) => v.toFixed(2) },
+            ttft: { label: 'TTFT (s)', format: (v) => v ? `${v.toFixed(3)} s` : '-' },
+        };
+
+        const datasetSources = {
+            'gptoss-h100': { label: 'H100 gpt-oss (latest)', src: 'gptoss_h100.json' },
+            'h100-nvupstream': { label: 'nvupstream H100 sample', src: 'h100_results.json' },
+            'gaudi3-sample': { label: 'Gaudi3 sample', src: 'results.json' },
+        };
+
+        const embeddedDatasets = {
+            'gptoss-h100': JSON.parse(document.getElementById('data-gptoss-h100').textContent),
+            'h100-nvupstream': JSON.parse(document.getElementById('data-h100-nvupstream').textContent)
+        };
+
+        document.getElementById('datasetSelect').addEventListener('change', loadData);
+        document.getElementById('modelFilter').addEventListener('change', refreshUI);
+        document.getElementById('islOslFilter').addEventListener('change', refreshUI);
+        document.getElementById('precisionFilter').addEventListener('change', refreshUI);
+        document.getElementById('yMetric').addEventListener('change', refreshUI);
+
+        populateDatasetSelect();
+        loadData();
+
+        function resolveSrc(src) {
+            const base = new URL(window.location.href);
+            if (!base.pathname.endsWith('/')) {
+                base.pathname = base.pathname.substring(0, base.pathname.lastIndexOf('/') + 1);
+            }
+            return new URL(src, base).toString();
+        }
+
         async function loadData() {
+            const datasetSelect = document.getElementById('datasetSelect');
+            if (!datasetSelect.value) {
+                datasetSelect.value = Object.keys(datasetSources)[0];
+            }
+
+            const datasetId = datasetSelect.value;
+            const dataset = datasetSources[datasetId];
+            if (!dataset) {
+                showSelectionMessage('Dataset not found.');
+                return;
+            }
+
             try {
-                const response = await fetch('results.json');
-                allResults = await response.json();
-                updateDashboard();
-                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-            } catch (error) {
-                console.error('Error loading data:', error);
-                document.getElementById('resultsBody').innerHTML = 
-                    '<tr><td colspan="8" style="color: red;">Error loading data. Make sure results.json exists!</td></tr>';
+                const resp = await fetch(resolveSrc(dataset.src), { cache: 'no-store' });
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}`);
+                }
+                const payload = await resp.json();
+                applyPayload(payload, dataset);
+            } catch (err) {
+                const embedded = embeddedDatasets[datasetId];
+                if (embedded) {
+                    console.warn('Falling back to embedded dataset', datasetId, err);
+                    applyPayload(embedded, dataset);
+                } else {
+                    console.error('Failed to load dataset', err);
+                    showSelectionMessage('Could not load data file.');
+                }
             }
         }
 
-        function updateDashboard() {
-            const filtered = filterResults();
-            updateStats(filtered);
-            updateCharts(filtered);
-            updateTable(filtered);
+        function applyPayload(payload, dataset) {
+            const { entries } = unpackPayload(payload, dataset);
+            rawData = normalize(entries);
+            populateFilterOptions(rawData);
+            refreshUI();
         }
 
-        function filterResults() {
-            const hw = document.getElementById('hwFilter').value;
-            const precision = document.getElementById('precisionFilter').value;
-            const tp = document.getElementById('tpFilter').value;
+        function unpackPayload(payload, dataset) {
+            if (Array.isArray(payload)) {
+                return { entries: payload, meta: { runName: dataset.label, runDate: '-', workflowUrl: dataset.src } };
+            }
+            return {
+                entries: payload.entries || [],
+                meta: {
+                    runName: payload.runName || dataset.label,
+                    runDate: payload.runDate || '-',
+                    workflowUrl: payload.workflowUrl || dataset.src,
+                }
+            };
+        }
 
-            return allResults.filter(r => {
-                if (hw !== 'all' && r.hw !== hw) return false;
+        function normalize(rows) {
+            return rows.map((r) => {
+                const isl = r.isl || (r.isl_osl ? String(r.isl_osl).split('/')[0] : 'Y');
+                const osl = r.osl || (r.isl_osl ? String(r.isl_osl).split('/')[1] : 'Y');
+                return {
+                    hardware: r.hardware || r.hw || 'H100',
+                    model: r.model || 'Unknown model',
+                    precision: (r.precision || r.prec || 'unknown').toLowerCase(),
+                    tp: Number(r.tp || r.tensor_parallel || 1),
+                    concurrency: Number(r.concurrency || r.conc || r.concurency || 0),
+                    throughput_per_gpu: Number(r.throughput_per_gpu || r.tput_per_gpu || 0),
+                    e2e_latency: Number(r.e2e_latency || r.mean_e2el || 0),
+                    interactivity: Number(r.interactivity || r.mean_intvty || 0),
+                    ttft: r.ttft !== undefined ? Number(r.ttft) : Number(r.mean_ttft || 0),
+                    isl,
+                    osl,
+                    isl_osl: `${isl}/${osl}`
+                };
+            });
+        }
+
+        function populateDatasetSelect() {
+            const select = document.getElementById('datasetSelect');
+            select.innerHTML = Object.entries(datasetSources)
+                .map(([id, d]) => `<option value="${id}">${d.label}</option>`)
+                .join('');
+            select.value = select.options.length ? select.options[0].value : '';
+        }
+
+        function populateFilterOptions(rows) {
+            const modelSelect = document.getElementById('modelFilter');
+            const islSelect = document.getElementById('islOslFilter');
+            const precisionSelect = document.getElementById('precisionFilter');
+            const metricSelect = document.getElementById('yMetric');
+
+            const uniqueModels = ['all', ...new Set(rows.map(r => r.model))];
+            modelSelect.innerHTML = uniqueModels.map(m => `<option value="${m}">${m === 'all' ? 'All models' : m}</option>`).join('');
+
+            const uniqueIslOsl = ['all', ...new Set(rows.map(r => r.isl_osl))];
+            islSelect.innerHTML = uniqueIslOsl.map(v => `<option value="${v}">${v === 'all' ? 'All' : v}</option>`).join('');
+
+            const uniquePrec = ['all', ...new Set(rows.map(r => r.precision))];
+            precisionSelect.innerHTML = uniquePrec.map(p => `<option value="${p}">${p === 'all' ? 'All' : p.toUpperCase()}</option>`).join('');
+
+            metricSelect.innerHTML = Object.entries(metricOptions)
+                .map(([key, meta]) => `<option value="${key}">${meta.label}</option>`)
+                .join('');
+            metricSelect.value = 'throughput_per_gpu';
+        }
+
+        function applyFilters(data) {
+            const model = document.getElementById('modelFilter').value;
+            const islOsl = document.getElementById('islOslFilter').value;
+            const precision = document.getElementById('precisionFilter').value;
+            return data.filter(r => {
+                if (model !== 'all' && r.model !== model) return false;
+                if (islOsl !== 'all' && r.isl_osl !== islOsl) return false;
                 if (precision !== 'all' && r.precision !== precision) return false;
-                if (tp !== 'all' && r.tp !== parseInt(tp)) return false;
                 return true;
             });
         }
 
-        function updateStats(results) {
-            if (results.length === 0) {
-                document.getElementById('peakThroughput').textContent = '-';
-                document.getElementById('bestLatency').textContent = '-';
-                document.getElementById('totalConfigs').textContent = '0';
-                document.getElementById('bestInteractivity').textContent = '-';
-                return;
+        function refreshUI() {
+            clearSelectionBox();
+            const filtered = applyFilters(rawData);
+            if (!filtered.length) {
+                showSelectionMessage('No datapoints match the selected filters.');
             }
-
-            const peakTput = Math.max(...results.map(r => r.tput_per_gpu));
-            const bestTTFT = Math.min(...results.map(r => r.median_ttft));
-            const bestIntvty = Math.max(...results.map(r => r.median_intvty));
-
-            document.getElementById('peakThroughput').textContent = peakTput.toFixed(1);
-            document.getElementById('bestLatency').textContent = bestTTFT.toFixed(3);
-            document.getElementById('totalConfigs').textContent = results.length;
-            document.getElementById('bestInteractivity').textContent = bestIntvty.toFixed(1);
+            renderCharts(filtered);
         }
 
-        function updateCharts(results) {
-            // Pareto Chart: Throughput vs Latency
-            updateParetoChart(results);
-            
-            // TP Chart: Performance by Tensor Parallelism
-            updateTPChart(results);
-            
-            // Concurrency Chart
-            updateConcChart(results);
+        function groupBy(arr, fn) {
+            return arr.reduce((acc, item) => {
+                const key = fn(item);
+                if (!acc[key]) acc[key] = [];
+                acc[key].push(item);
+                return acc;
+            }, {});
         }
 
-        function updateParetoChart(results) {
-            const ctx = document.getElementById('paretoChart');
-            if (charts.pareto) charts.pareto.destroy();
+        function isSelected(chartKey, datasetIndex, dataIndex) {
+            return selectedPoint && selectedPoint.chartKey === chartKey && selectedPoint.datasetIndex === datasetIndex && selectedPoint.dataIndex === dataIndex;
+        }
 
-            const data = results.map(r => ({
-                x: r.median_ttft,
-                y: r.tput_per_gpu,
-                label: `TP${r.tp} C${r.conc} ${r.precision}`
-            }));
+        function createDataset(name, points, idx, chartKey, mapper, tension = 0.2) {
+            const color = palette[idx % palette.length];
+            return {
+                label: name,
+                data: points.map(mapper),
+                borderColor: color,
+                backgroundColor: color,
+                tension,
+                pointRadius: (ctx) => isSelected(chartKey, ctx.datasetIndex, ctx.dataIndex) ? 7 : 5,
+                pointBackgroundColor: (ctx) => isSelected(chartKey, ctx.datasetIndex, ctx.dataIndex) ? '#0f172a' : color,
+                pointBorderColor: (ctx) => isSelected(chartKey, ctx.datasetIndex, ctx.dataIndex) ? '#0f172a' : color,
+                borderWidth: 2,
+                showLine: true,
+            };
+        }
 
-            charts.pareto = new Chart(ctx, {
+        function handlePointClick(chartKey, chart, evt) {
+            const elements = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            if (!elements.length) return;
+            const { datasetIndex, index } = elements[0];
+            const dataset = chart.data.datasets[datasetIndex];
+            const point = dataset.data[index];
+            selectedPoint = { chartKey, datasetIndex, dataIndex: index, datasetLabel: dataset.label, point };
+            updateSelectionBox(chartKey, dataset.label, point);
+            chart.update();
+        }
+
+        function clearSelectionBox() {
+            selectedPoint = null;
+            const box = document.getElementById('selectionBox');
+            box.hidden = true;
+            document.getElementById('selectionDetails').innerHTML = '';
+        }
+
+        function showSelectionMessage(message) {
+            const box = document.getElementById('selectionBox');
+            const details = document.getElementById('selectionDetails');
+            details.innerHTML = `<span>${message}</span>`;
+            box.hidden = false;
+        }
+
+        function updateSelectionBox(chartKey, label, point) {
+            const box = document.getElementById('selectionBox');
+            const details = document.getElementById('selectionDetails');
+            const r = point.raw;
+            details.innerHTML = `
+                <span><strong>Chart:</strong> ${chartKey === 'metric' ? 'Metric vs Concurrency' : 'Throughput vs Latency'}</span>
+                <span><strong>Series:</strong> ${label}</span>
+                <span><strong>Model:</strong> ${r.model}</span>
+                <span><strong>Precision:</strong> ${r.precision.toUpperCase()}</span>
+                <span><strong>TP:</strong> ${r.tp}</span>
+                <span><strong>Concurrency:</strong> ${r.concurrency}</span>
+                <span><strong>Throughput/GPU:</strong> ${r.throughput_per_gpu.toFixed(1)} tok/s</span>
+                <span><strong>E2E latency:</strong> ${r.e2e_latency.toFixed(2)} s</span>
+                <span><strong>Interactivity:</strong> ${r.interactivity.toFixed(2)}</span>
+                <span><strong>TTFT:</strong> ${r.ttft ? r.ttft.toFixed(3) + ' s' : '-'}</span>
+            `;
+            box.hidden = false;
+        }
+
+        function renderCharts(rows) {
+            renderMetricChart(rows);
+            renderLatencyChart(rows);
+        }
+
+        function renderMetricChart(rows) {
+            const metricKey = document.getElementById('yMetric').value;
+            const meta = metricOptions[metricKey];
+            const ctx = document.getElementById('metricChart');
+            if (charts.metricChart) charts.metricChart.destroy();
+
+            const grouped = groupBy(rows, r => `TP${r.tp} · ${r.precision.toUpperCase()}`);
+            const datasets = Object.entries(grouped).map(([name, points], idx) => {
+                const sorted = [...points].sort((a, b) => a.concurrency - b.concurrency);
+                return createDataset(name, sorted, idx, 'metric', (p) => ({
+                    x: p.concurrency,
+                    y: p[metricKey],
+                    raw: p,
+                    pointLabel: `${p.model} · C${p.concurrency}`
+                }), 0.2);
+            });
+
+            charts.metricChart = new Chart(ctx, {
                 type: 'scatter',
-                data: {
-                    datasets: [{
-                        label: 'Throughput vs Latency',
-                        data: data,
-                        backgroundColor: 'rgba(102, 126, 234, 0.7)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 2,
-                        pointRadius: 6
-                    }]
-                },
+                data: { datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
                     plugins: {
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (context) => {
-                                    const point = context.raw;
-                                    return `${point.label}: ${point.y.toFixed(1)} tok/s/GPU @ ${point.x.toFixed(3)}s TTFT`;
+                                label: (ctx) => {
+                                    const raw = ctx.raw;
+                                    return `${ctx.dataset.label} — ${raw.pointLabel}: ${meta.format(raw.y)}`;
                                 }
                             }
                         }
                     },
                     scales: {
-                        x: {
-                            title: { display: true, text: 'Median TTFT (seconds) - Lower is Better' },
-                            type: 'logarithmic'
-                        },
-                        y: {
-                            title: { display: true, text: 'Throughput per GPU (tokens/sec)' }
-                        }
+                        x: { title: { display: true, text: 'Concurrency' }, grid: { color: 'rgba(15,23,42,0.05)' } },
+                        y: { title: { display: true, text: meta.label }, grid: { color: 'rgba(15,23,42,0.05)' } }
+                    },
+                    onClick: (evt, elements, chart) => handlePointClick('metric', chart, evt),
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
                     }
                 }
             });
         }
 
-        function updateTPChart(results) {
-            const ctx = document.getElementById('tpChart');
-            if (charts.tp) charts.tp.destroy();
+        function renderLatencyChart(rows) {
+            const ctx = document.getElementById('latencyChart');
+            if (charts.latencyChart) charts.latencyChart.destroy();
 
-            const tpGroups = {};
-            results.forEach(r => {
-                if (!tpGroups[r.tp]) tpGroups[r.tp] = [];
-                tpGroups[r.tp].push(r.tput_per_gpu);
+            const grouped = groupBy(rows, r => `TP${r.tp} · ${r.precision.toUpperCase()}`);
+            const datasets = Object.entries(grouped).map(([name, points], idx) => {
+                const sorted = [...points].sort((a, b) => a.e2e_latency - b.e2e_latency);
+                return createDataset(name, sorted, idx, 'latency', (p) => ({
+                    x: p.e2e_latency,
+                    y: p.throughput_per_gpu,
+                    raw: p,
+                    pointLabel: `${p.model} · C${p.concurrency}`
+                }), 0.15);
             });
 
-            const labels = Object.keys(tpGroups).sort((a, b) => a - b);
-            const avgTput = labels.map(tp => {
-                const vals = tpGroups[tp];
-                return vals.reduce((a, b) => a + b, 0) / vals.length;
-            });
-
-            charts.tp = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.map(tp => `TP=${tp}`),
-                    datasets: [{
-                        label: 'Avg Throughput per GPU',
-                        data: avgTput,
-                        backgroundColor: 'rgba(118, 75, 162, 0.7)',
-                        borderColor: 'rgba(118, 75, 162, 1)',
-                        borderWidth: 2
-                    }]
-                },
+            charts.latencyChart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Tokens/sec/GPU' }
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const raw = ctx.raw;
+                                    return `${ctx.dataset.label} — ${raw.pointLabel}: ${raw.y.toFixed(1)} tok/s @ ${raw.x.toFixed(2)}s`;
+                                }
+                            }
                         }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'E2E Latency (s) ↓' }, grid: { color: 'rgba(15,23,42,0.05)' } },
+                        y: { title: { display: true, text: 'Token Throughput per GPU' }, grid: { color: 'rgba(15,23,42,0.05)' } }
+                    },
+                    onClick: (evt, elements, chart) => handlePointClick('latency', chart, evt),
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
                     }
                 }
             });
         }
-
-        function updateConcChart(results) {
-            const ctx = document.getElementById('concChart');
-            if (charts.conc) charts.conc.destroy();
-
-            const concGroups = {};
-            results.forEach(r => {
-                if (!concGroups[r.conc]) concGroups[r.conc] = [];
-                concGroups[r.conc].push(r.tput_per_gpu);
-            });
-
-            const labels = Object.keys(concGroups).sort((a, b) => a - b);
-            const avgTput = labels.map(c => {
-                const vals = concGroups[c];
-                return vals.reduce((a, b) => a + b, 0) / vals.length;
-            });
-
-            charts.conc = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels.map(c => `Conc=${c}`),
-                    datasets: [{
-                        label: 'Avg Throughput per GPU',
-                        data: avgTput,
-                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
-                        borderColor: 'rgba(102, 126, 234, 1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Tokens/sec/GPU' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateTable(results) {
-            const tbody = document.getElementById('resultsBody');
-            if (results.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">No results match the filters</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = results
-                .sort((a, b) => b.tput_per_gpu - a.tput_per_gpu)
-                .map(r => `
-                    <tr>
-                        <td>${r.hw}</td>
-                        <td>${r.tp}</td>
-                        <td>${r.conc}</td>
-                        <td>${r.precision}</td>
-                        <td><strong>${r.tput_per_gpu.toFixed(1)}</strong></td>
-                        <td>${r.p99_ttft.toFixed(3)}s</td>
-                        <td>${r.median_intvty.toFixed(1)}</td>
-                        <td>${r.mean_e2el.toFixed(2)}s</td>
-                    </tr>
-                `).join('');
-        }
-
-        // Add event listeners
-        document.getElementById('hwFilter').addEventListener('change', updateDashboard);
-        document.getElementById('precisionFilter').addEventListener('change', updateDashboard);
-        document.getElementById('tpFilter').addEventListener('change', updateDashboard);
-
-        // Load data on page load
-        loadData();
     </script>
 </body>
 </html>
