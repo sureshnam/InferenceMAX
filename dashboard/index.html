@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InferenceMAX Dashboard</title>
-    <meta http-equiv="Cache-Control" content="no-store" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -69,6 +66,25 @@
 
         .filter-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
 
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .meta-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
         .panel {
             background: var(--panel);
             border: 1px solid var(--border);
@@ -79,9 +95,13 @@
 
         .panel h2 { margin: 0 0 12px 0; font-size: 18px; }
 
-        .chart-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .stat { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .stat .label { color: var(--muted); font-size: 13px; }
+        .stat .value { font-weight: 700; font-size: 18px; }
 
-        .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; min-height: 360px; }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 16px; }
+
+        .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; }
         .chart-wrapper h3 { margin: 0 0 6px 0; font-size: 15px; color: var(--muted); }
 
         .selection {
@@ -117,13 +137,13 @@
         <header>
             <div class="title">
                 <h1>InferenceMAX Dashboard</h1>
-            <div class="subtitle">Explore H100 nvupstream runs with selectable model, ISL/OSL, precision, and metrics.</div>
-        </div>
-        <label class="dataset-picker">
-            Workflow run
-            <select id="datasetSelect"></select>
-        </label>
-    </header>
+                <div class="subtitle">Explore H100 nvupstream runs with selectable model, ISL/OSL, precision, and metrics.</div>
+            </div>
+            <label class="dataset-picker">
+                Workflow run
+                <select id="datasetSelect"></select>
+            </label>
+        </header>
 
         <div class="filters">
             <div>
@@ -141,6 +161,21 @@
             <div>
                 <span class="filter-label">Y-Axis Metric</span>
                 <select id="yMetric"></select>
+            </div>
+        </div>
+
+        <div class="meta-row">
+            <div>Run Date: <strong id="runDate">-</strong></div>
+            <div>Workflow Runs: <a id="workflowLink" href="#" target="_blank" rel="noopener">open</a></div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Run stats</h2>
+                <div class="stat"><span class="label">Peak throughput / GPU</span><span class="value" id="peakTput">-</span></div>
+                <div class="stat"><span class="label">Best E2E latency</span><span class="value" id="bestLatency">-</span></div>
+                <div class="stat"><span class="label">Best interactivity</span><span class="value" id="bestInteractivity">-</span></div>
+                <div class="stat"><span class="label">Configurations</span><span class="value" id="configCount">-</span></div>
             </div>
         </div>
 
@@ -167,6 +202,7 @@
         const palette = ['#2563eb', '#f97316', '#10b981', '#a855f7', '#eab308', '#ef4444'];
         let charts = {};
         let rawData = [];
+        let currentMeta = {};
         let selectedPoint = null;
 
         const metricOptions = {
@@ -192,33 +228,21 @@
         loadData();
 
         async function loadData() {
-            const datasetSelect = document.getElementById('datasetSelect');
-            if (!datasetSelect.value) {
-                datasetSelect.value = Object.keys(datasetSources)[0];
-            }
-
-            const datasetId = datasetSelect.value;
+            const datasetId = document.getElementById('datasetSelect').value;
             const dataset = datasetSources[datasetId];
-            if (!dataset) {
-                showSelectionMessage('Dataset not found.');
-                return;
-            }
-
             try {
-                const resp = await fetch(dataset.src, { cache: 'no-store' });
-                if (!resp.ok) {
-                    throw new Error(`HTTP ${resp.status}`);
-                }
+                const resp = await fetch(dataset.src);
                 const payload = await resp.json();
                 const { entries, meta } = unpackPayload(payload, dataset);
+                currentMeta = meta;
                 rawData = normalize(entries);
                 populateFilterOptions(rawData);
                 refreshUI();
+                updateMeta(meta);
             } catch (err) {
                 console.error('Failed to load dataset', err);
                 showSelectionMessage('Could not load data file.');
             }
-        }
 
         function unpackPayload(payload, dataset) {
             if (Array.isArray(payload)) {
@@ -260,7 +284,6 @@
             select.innerHTML = Object.entries(datasetSources)
                 .map(([id, d]) => `<option value="${id}">${d.label}</option>`)
                 .join('');
-            select.value = select.options.length ? select.options[0].value : '';
         }
 
         function populateFilterOptions(rows) {
@@ -299,10 +322,22 @@
         function refreshUI() {
             clearSelectionBox();
             const filtered = applyFilters(rawData);
-            if (!filtered.length) {
-                showSelectionMessage('No datapoints match the selected filters.');
-            }
+            updateStats(filtered);
             renderCharts(filtered);
+        }
+
+        function updateStats(rows) {
+            if (!rows.length) {
+                document.getElementById('peakTput').textContent = '-';
+                document.getElementById('bestLatency').textContent = '-';
+                document.getElementById('bestInteractivity').textContent = '-';
+                document.getElementById('configCount').textContent = '0';
+                return;
+            }
+            document.getElementById('peakTput').textContent = `${Math.max(...rows.map(r => r.throughput_per_gpu)).toFixed(1)} tok/s`;
+            document.getElementById('bestLatency').textContent = `${Math.min(...rows.map(r => r.e2e_latency)).toFixed(2)} s`;
+            document.getElementById('bestInteractivity').textContent = `${Math.max(...rows.map(r => r.interactivity)).toFixed(2)}`;
+            document.getElementById('configCount').textContent = rows.length;
         }
 
         function groupBy(arr, fn) {
@@ -471,6 +506,11 @@
                     }
                 }
             });
+        }
+
+        function updateMeta(meta) {
+            document.getElementById('runDate').textContent = meta.runDate || '-';
+            document.getElementById('workflowLink').href = meta.workflowUrl || '#';
         }
     </script>
 </body>
