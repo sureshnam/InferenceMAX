@@ -104,6 +104,25 @@
         .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; }
         .chart-wrapper h3 { margin: 0 0 6px 0; font-size: 15px; color: var(--muted); }
 
+        .selection {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #f8fafc;
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        .selection-title {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .selection-row { display: grid; gap: 4px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
         th { color: var(--muted); font-weight: 600; }
@@ -222,7 +241,7 @@
                 updateMeta(meta);
             } catch (err) {
                 console.error('Failed to load dataset', err);
-                document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" style="color:#ef4444">Could not load data file.</td></tr>';
+                showSelectionMessage('Could not load data file.');
             }
         }
 
@@ -369,6 +388,13 @@
             document.getElementById('selectionDetails').innerHTML = '';
         }
 
+        function showSelectionMessage(message) {
+            const box = document.getElementById('selectionBox');
+            const details = document.getElementById('selectionDetails');
+            details.innerHTML = `<span>${message}</span>`;
+            box.hidden = false;
+        }
+
         function updateSelectionBox(chartKey, label, point) {
             const box = document.getElementById('selectionBox');
             const details = document.getElementById('selectionDetails');
@@ -431,7 +457,10 @@
                         x: { title: { display: true, text: 'Concurrency' }, grid: { color: 'rgba(15,23,42,0.05)' } },
                         y: { title: { display: true, text: meta.label }, grid: { color: 'rgba(15,23,42,0.05)' } }
                     },
-                    onClick: (evt, elements, chart) => handlePointClick('metric', chart, evt)
+                    onClick: (evt, elements, chart) => handlePointClick('metric', chart, evt),
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                    }
                 }
             });
         }
@@ -472,7 +501,10 @@
                         x: { title: { display: true, text: 'E2E Latency (s) ↓' }, grid: { color: 'rgba(15,23,42,0.05)' } },
                         y: { title: { display: true, text: 'Token Throughput per GPU' }, grid: { color: 'rgba(15,23,42,0.05)' } }
                     },
-                    onClick: (evt, elements, chart) => handlePointClick('latency', chart, evt)
+                    onClick: (evt, elements, chart) => handlePointClick('latency', chart, evt),
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                    }
                 }
             });
         }
