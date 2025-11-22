@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InferenceMAX Dashboard</title>
-    <meta http-equiv="Cache-Control" content="no-store" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
@@ -69,6 +66,25 @@
 
         .filter-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
 
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .meta-row a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
         .panel {
             background: var(--panel);
             border: 1px solid var(--border);
@@ -79,9 +95,13 @@
 
         .panel h2 { margin: 0 0 12px 0; font-size: 18px; }
 
-        .chart-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .stat { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .stat .label { color: var(--muted); font-size: 13px; }
+        .stat .value { font-weight: 700; font-size: 18px; }
 
-        .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; min-height: 360px; }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 16px; }
+
+        .chart-wrapper { padding: 10px; border: 1px solid var(--border); border-radius: 12px; }
         .chart-wrapper h3 { margin: 0 0 6px 0; font-size: 15px; color: var(--muted); }
 
         .selection {
@@ -117,13 +137,13 @@
         <header>
             <div class="title">
                 <h1>InferenceMAX Dashboard</h1>
-            <div class="subtitle">Explore H100 nvupstream runs with selectable model, ISL/OSL, precision, and metrics.</div>
-        </div>
-        <label class="dataset-picker">
-            Workflow run
-            <select id="datasetSelect"></select>
-        </label>
-    </header>
+                <div class="subtitle">Explore H100 nvupstream runs with selectable model, ISL/OSL, precision, and metrics.</div>
+            </div>
+            <label class="dataset-picker">
+                Workflow run
+                <select id="datasetSelect"></select>
+            </label>
+        </header>
 
         <div class="filters">
             <div>
@@ -141,6 +161,22 @@
             <div>
                 <span class="filter-label">Y-Axis Metric</span>
                 <select id="yMetric"></select>
+            </div>
+        </div>
+    </div>
+
+        <div class="meta-row">
+            <div>Run Date: <strong id="runDate">-</strong></div>
+            <div>Workflow Runs: <a id="workflowLink" href="#" target="_blank" rel="noopener">open</a></div>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>Run stats</h2>
+                <div class="stat"><span class="label">Peak throughput / GPU</span><span class="value" id="peakTput">-</span></div>
+                <div class="stat"><span class="label">Best E2E latency</span><span class="value" id="bestLatency">-</span></div>
+                <div class="stat"><span class="label">Best interactivity</span><span class="value" id="bestInteractivity">-</span></div>
+                <div class="stat"><span class="label">Configurations</span><span class="value" id="configCount">-</span></div>
             </div>
         </div>
 
@@ -163,563 +199,11 @@
         </div>
     </div>
 
-    <script type="application/json" id="data-gptoss-h100">
-        {
-          "runName": "H100 gpt-oss latest",
-          "runDate": "2025-12-01T00:08:36Z",
-          "workflowUrl": "https://github.com/sureshnam/InferenceMAX/actions/runs/19357558473",
-          "entries": [
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 12B",
-              "precision": "fp4",
-              "tp": 8,
-              "concurrency": 32,
-              "throughput_per_gpu": 327.6161755206977,
-              "e2e_latency": 21.78512649911645,
-              "interactivity": 42.8869316004796,
-              "ttft": 0.07536989054642618,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 12B",
-              "precision": "fp4",
-              "tp": 8,
-              "concurrency": 16,
-              "throughput_per_gpu": 250.62887176034885,
-              "e2e_latency": 14.11312409507824,
-              "interactivity": 27.3540627689398,
-              "ttft": 0.07494005849730492,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 12B",
-              "precision": "fp4",
-              "tp": 8,
-              "concurrency": 8,
-              "throughput_per_gpu": 155.24179020524434,
-              "e2e_latency": 8.732380374550447,
-              "interactivity": 16.94568859448316,
-              "ttft": 0.07470951038684472,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 12B",
-              "precision": "fp4",
-              "tp": 8,
-              "concurrency": 4,
-              "throughput_per_gpu": 83.31282787677974,
-              "e2e_latency": 6.972498996254931,
-              "interactivity": 11.682493139291552,
-              "ttft": 0.07189072895000949,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 12B",
-              "precision": "fp4",
-              "tp": 8,
-              "concurrency": 2,
-              "throughput_per_gpu": 41.628788045106516,
-              "e2e_latency": 6.146832871085437,
-              "interactivity": 9.324186159714993,
-              "ttft": 0.07102694942674195,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 12B",
-              "precision": "fp4",
-              "tp": 8,
-              "concurrency": 1,
-              "throughput_per_gpu": 20.73107209794201,
-              "e2e_latency": 5.917416036547701,
-              "interactivity": 8.618609786437936,
-              "ttft": 0.07084894917716556,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 64,
-              "throughput_per_gpu": 472.02246034359766,
-              "e2e_latency": 15.292549407172855,
-              "interactivity": 30.47842549631242,
-              "ttft": 0.057390537680216975,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 32,
-              "throughput_per_gpu": 347.97796614583335,
-              "e2e_latency": 10.400912136713428,
-              "interactivity": 20.67781182158764,
-              "ttft": 0.05741225499471107,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 16,
-              "throughput_per_gpu": 242.12811279296872,
-              "e2e_latency": 8.287464922476686,
-              "interactivity": 16.514454933432897,
-              "ttft": 0.05721166224198673,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 8,
-              "throughput_per_gpu": 142.14401299924189,
-              "e2e_latency": 7.320414051055091,
-              "interactivity": 14.634048010307589,
-              "ttft": 0.057158287606914514,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 4,
-              "throughput_per_gpu": 76.79710133997696,
-              "e2e_latency": 6.4702930830438365,
-              "interactivity": 12.22051717401995,
-              "ttft": 0.05693083196326571,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 2,
-              "throughput_per_gpu": 38.5315638049528,
-              "e2e_latency": 6.203418723425785,
-              "interactivity": 10.703720388560744,
-              "ttft": 0.05695451536342059,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 1,
-              "throughput_per_gpu": 19.218014092932904,
-              "e2e_latency": 6.069578660100472,
-              "interactivity": 10.2368743208789,
-              "ttft": 0.05690083216141505,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 64,
-              "throughput_per_gpu": 361.1002151082357,
-              "e2e_latency": 13.547648979822794,
-              "interactivity": 26.551714867253913,
-              "ttft": 0.056865955639680555,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 32,
-              "throughput_per_gpu": 276.21160634358724,
-              "e2e_latency": 9.991112973690996,
-              "interactivity": 19.870979536506053,
-              "ttft": 0.056664544216579434,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 16,
-              "throughput_per_gpu": 194.953449434178,
-              "e2e_latency": 8.149236493303686,
-              "interactivity": 16.289479890990493,
-              "ttft": 0.056811156356177305,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 8,
-              "throughput_per_gpu": 117.91524642489626,
-              "e2e_latency": 7.384056639740274,
-              "interactivity": 14.871953468946716,
-              "ttft": 0.056598260518470555,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 4,
-              "throughput_per_gpu": 63.176850637615424,
-              "e2e_latency": 6.91476033968016,
-              "interactivity": 13.42190093991704,
-              "ttft": 0.05670795186286522,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 2,
-              "throughput_per_gpu": 32.17252667788158,
-              "e2e_latency": 6.522256248874385,
-              "interactivity": 11.915132750923689,
-              "ttft": 0.05666508914133342,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 6.7B",
-              "precision": "fp4",
-              "tp": 4,
-              "concurrency": 1,
-              "throughput_per_gpu": 16.00254646502108,
-              "e2e_latency": 6.319182339145534,
-              "interactivity": 11.369566649745965,
-              "ttft": 0.056562114655962686,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 1024,
-              "throughput_per_gpu": 899.5633044870694,
-              "e2e_latency": 5.700784987609748,
-              "interactivity": 11.099594828183804,
-              "ttft": 0.040855595603169874,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 512,
-              "throughput_per_gpu": 595.3300283101737,
-              "e2e_latency": 3.4568618287685794,
-              "interactivity": 6.517867981003264,
-              "ttft": 0.04080763432574225,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 256,
-              "throughput_per_gpu": 351.2782999680442,
-              "e2e_latency": 2.38497492608493,
-              "interactivity": 4.563944402977988,
-              "ttft": 0.04091362674516481,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 128,
-              "throughput_per_gpu": 197.92591446252527,
-              "e2e_latency": 1.8015611030720874,
-              "interactivity": 3.451051271632879,
-              "ttft": 0.04070850063157982,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 64,
-              "throughput_per_gpu": 107.74861137810126,
-              "e2e_latency": 1.4615291749235834,
-              "interactivity": 2.8309075709558247,
-              "ttft": 0.040557615371323744,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 32,
-              "throughput_per_gpu": 59.159143954532815,
-              "e2e_latency": 1.2721009530671438,
-              "interactivity": 2.4019488119327625,
-              "ttft": 0.040458372170880905,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 16,
-              "throughput_per_gpu": 32.46532503763832,
-              "e2e_latency": 1.1844554563098868,
-              "interactivity": 2.195512448223417,
-              "ttft": 0.040309938125776365,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 8,
-              "throughput_per_gpu": 17.89056454575475,
-              "e2e_latency": 1.1459512685946054,
-              "interactivity": 2.110112897116095,
-              "ttft": 0.04045051315812772,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 4,
-              "throughput_per_gpu": 9.7350248320776,
-              "e2e_latency": 1.1332299484500944,
-              "interactivity": 2.074248538979146,
-              "ttft": 0.040562239078892196,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 2,
-              "throughput_per_gpu": 5.029763879854542,
-              "e2e_latency": 1.1343443539610003,
-              "interactivity": 2.0700624056912396,
-              "ttft": 0.04026076725577047,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "gpt-oss 1.1B",
-              "precision": "fp8",
-              "tp": 1,
-              "concurrency": 1,
-              "throughput_per_gpu": 2.6522808933481743,
-              "e2e_latency": 1.134989110894278,
-              "interactivity": 2.068454289521247,
-              "ttft": 0.04020436228129982,
-              "isl": "Y",
-              "osl": "Y"
-            }
-          ]
-        }
-    </script>
-
-    <script type="application/json" id="data-h100-nvupstream">
-        {
-          "runName": "nvupstream H100 sample",
-          "runDate": "2023-11-20T00:00:00Z",
-          "workflowUrl": "https://github.com/sureshnam/InferenceMAX/actions/runs/19357558473",
-          "entries": [
-            {
-              "hardware": "H100",
-              "model": "LLaMA2-70B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 32,
-              "throughput_per_gpu": 90.2,
-              "e2e_latency": 30.1,
-              "interactivity": 55.2,
-              "ttft": 0.81,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "LLaMA2-70B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 16,
-              "throughput_per_gpu": 68.4,
-              "e2e_latency": 18.4,
-              "interactivity": 35.5,
-              "ttft": 0.62,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "LLaMA2-70B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 8,
-              "throughput_per_gpu": 42.7,
-              "e2e_latency": 11.7,
-              "interactivity": 22.2,
-              "ttft": 0.54,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "LLaMA2-70B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 4,
-              "throughput_per_gpu": 23.5,
-              "e2e_latency": 8.3,
-              "interactivity": 15.4,
-              "ttft": 0.48,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "LLaMA2-70B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 2,
-              "throughput_per_gpu": 12.4,
-              "e2e_latency": 7.2,
-              "interactivity": 13.1,
-              "ttft": 0.46,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "Mixtral-8x7B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 16,
-              "throughput_per_gpu": 52.3,
-              "e2e_latency": 19.6,
-              "interactivity": 37.2,
-              "ttft": 0.73,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "Mixtral-8x7B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 8,
-              "throughput_per_gpu": 33.9,
-              "e2e_latency": 12.4,
-              "interactivity": 23.5,
-              "ttft": 0.61,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "Mixtral-8x7B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 4,
-              "throughput_per_gpu": 18.5,
-              "e2e_latency": 9.4,
-              "interactivity": 17.4,
-              "ttft": 0.55,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "Mixtral-8x7B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 2,
-              "throughput_per_gpu": 9.9,
-              "e2e_latency": 8.5,
-              "interactivity": 15.4,
-              "ttft": 0.52,
-              "isl": "Y",
-              "osl": "Y"
-            },
-            {
-              "hardware": "H100",
-              "model": "Mixtral-8x7B",
-              "precision": "fp8",
-              "tp": 8,
-              "concurrency": 1,
-              "throughput_per_gpu": 5.1,
-              "e2e_latency": 8.1,
-              "interactivity": 14.9,
-              "ttft": 0.51,
-              "isl": "Y",
-              "osl": "Y"
-            }
-          ]
-        }
-    </script>
-
     <script>
         const palette = ['#2563eb', '#f97316', '#10b981', '#a855f7', '#eab308', '#ef4444'];
         let charts = {};
         let rawData = [];
+        let currentMeta = {};
         let selectedPoint = null;
 
         const metricOptions = {
@@ -735,11 +219,6 @@
             'gaudi3-sample': { label: 'Gaudi3 sample', src: 'results.json' },
         };
 
-        const embeddedDatasets = {
-            'gptoss-h100': JSON.parse(document.getElementById('data-gptoss-h100').textContent),
-            'h100-nvupstream': JSON.parse(document.getElementById('data-h100-nvupstream').textContent)
-        };
-
         document.getElementById('datasetSelect').addEventListener('change', loadData);
         document.getElementById('modelFilter').addEventListener('change', refreshUI);
         document.getElementById('islOslFilter').addEventListener('change', refreshUI);
@@ -750,43 +229,21 @@
         loadData();
 
         async function loadData() {
-            const datasetSelect = document.getElementById('datasetSelect');
-            if (!datasetSelect.value) {
-                datasetSelect.value = Object.keys(datasetSources)[0];
-            }
-
-            const datasetId = datasetSelect.value;
+            const datasetId = document.getElementById('datasetSelect').value;
             const dataset = datasetSources[datasetId];
-            if (!dataset) {
-                showSelectionMessage('Dataset not found.');
-                return;
-            }
-
             try {
-                const resp = await fetch(dataset.src, { cache: 'no-store' });
-                if (!resp.ok) {
-                    throw new Error(`HTTP ${resp.status}`);
-                }
+                const resp = await fetch(dataset.src);
                 const payload = await resp.json();
-                applyPayload(payload, dataset);
+                const { entries, meta } = unpackPayload(payload, dataset);
+                currentMeta = meta;
+                rawData = normalize(entries);
+                populateFilterOptions(rawData);
+                refreshUI();
+                updateMeta(meta);
             } catch (err) {
-                const embedded = embeddedDatasets[datasetId];
-                if (embedded) {
-                    console.warn('Falling back to embedded dataset', datasetId, err);
-                    applyPayload(embedded, dataset);
-                } else {
-                    console.error('Failed to load dataset', err);
-                    showSelectionMessage('Could not load data file.');
-                }
+                console.error('Failed to load dataset', err);
+                showSelectionMessage('Could not load data file.');
             }
-        }
-
-        function applyPayload(payload, dataset) {
-            const { entries } = unpackPayload(payload, dataset);
-            rawData = normalize(entries);
-            populateFilterOptions(rawData);
-            refreshUI();
-        }
 
         function unpackPayload(payload, dataset) {
             if (Array.isArray(payload)) {
@@ -828,7 +285,6 @@
             select.innerHTML = Object.entries(datasetSources)
                 .map(([id, d]) => `<option value="${id}">${d.label}</option>`)
                 .join('');
-            select.value = select.options.length ? select.options[0].value : '';
         }
 
         function populateFilterOptions(rows) {
@@ -867,10 +323,22 @@
         function refreshUI() {
             clearSelectionBox();
             const filtered = applyFilters(rawData);
-            if (!filtered.length) {
-                showSelectionMessage('No datapoints match the selected filters.');
-            }
+            updateStats(filtered);
             renderCharts(filtered);
+        }
+
+        function updateStats(rows) {
+            if (!rows.length) {
+                document.getElementById('peakTput').textContent = '-';
+                document.getElementById('bestLatency').textContent = '-';
+                document.getElementById('bestInteractivity').textContent = '-';
+                document.getElementById('configCount').textContent = '0';
+                return;
+            }
+            document.getElementById('peakTput').textContent = `${Math.max(...rows.map(r => r.throughput_per_gpu)).toFixed(1)} tok/s`;
+            document.getElementById('bestLatency').textContent = `${Math.min(...rows.map(r => r.e2e_latency)).toFixed(2)} s`;
+            document.getElementById('bestInteractivity').textContent = `${Math.max(...rows.map(r => r.interactivity)).toFixed(2)}`;
+            document.getElementById('configCount').textContent = rows.length;
         }
 
         function groupBy(arr, fn) {
@@ -1039,6 +507,11 @@
                     }
                 }
             });
+        }
+
+        function updateMeta(meta) {
+            document.getElementById('runDate').textContent = meta.runDate || '-';
+            document.getElementById('workflowLink').href = meta.workflowUrl || '#';
         }
     </script>
 </body>
